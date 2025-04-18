@@ -18,7 +18,8 @@
                       ;; The Scheme representation we chose uses strings, but Racket's jsexpr use symbols
                       (cons (string->symbol (car element))
                             (make-jsexpr (cdr element))))
-                    datum)))))
+                    datum)))
+          (else (error "Unknown type annotation"))))
       expr))
 
 (define jsexpr (make-jsexpr expr))
