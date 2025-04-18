@@ -23,6 +23,32 @@
 					  (lambda (output-port) (write jsexpr output-port))))
 				 'output racket-output))))
 
+(define (json-dict? expr)
+  (and
+   (pair? expr)
+   (eqv? (car expr) 'dict)
+   (alist? (cdr expr))))
+
+(define (json-list? expr)
+  (and
+   (pair? expr)
+   (eqv? (car expr) 'list)
+   (list? (cdr expr))))
+
+;; Equivalent of dict[key]
+(define (%json-key dict key)
+  (assert (json-dict? dict))
+  (cdr (assoc key (cdr dict))))
+
+;; I don't know if this will have a practical use but
+;; (json-key j key1 key2 ... keyn) should be equivalent to j[key1][key2][...][keyn]
+(define (json-key expr . keys)
+  (define (%json-key-path expr keys)
+    (if (eqv? keys (list))
+	expr
+	(%json-key-path (%json-key expr (car keys)) (cdr keys))))
+  (%json-key-path expr keys))
+
 ;; Some test cases
 
 (define s1 "[1, 2, {\"a\": \"b\"}, {\"b\": {}, \"c\": false}, true, null]")
@@ -36,3 +62,4 @@
 (write j2) (newline)
 (define c2 (jsexpr->string j2))
 (display c2) (newline)
+
