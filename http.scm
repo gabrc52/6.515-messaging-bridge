@@ -1,5 +1,7 @@
 (load-option 'format)
 
+;; TODO: depends on JSON stuff. import it somehow?
+
 ;; Credit https://www.reddit.com/r/scheme/comments/x1xd09/mit_scheme_httprequest/
 (define (curl-prepare-headers alist)
   (append-map (lambda (h)
@@ -29,8 +31,6 @@
 ;; We can also get some function combinators for converting to JSON
 ;;   (then the new functions just need the more specific request)
 ;; And maybe a way of declaratively expressing which combinators need to be applied?
-
-(string->jsexpr (curl-http-request "https://api.adviceslip.com" "/advice"))
 
 (define (get-advice)
   (json-key

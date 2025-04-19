@@ -38,7 +38,10 @@
 ;; Equivalent of dict[key]
 (define (%json-key dict key)
   (assert (json-dict? dict))
-  (cdr (assoc key (cdr dict))))
+  (let ((pair (assoc key (cdr dict))))
+    (if (false? pair)
+	(error (format #f "Key ~A not found on ~A" key dict))
+	(cdr (assoc key (cdr dict))))))
 
 ;; I don't know if this will have a practical use but
 ;; (json-key j key1 key2 ... keyn) should be equivalent to j[key1][key2][...][keyn]
