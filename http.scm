@@ -103,3 +103,26 @@
 (http-get "http://localhost:10001/api/v4/config/client?format=old" '())
 
 ;; None of the http-get work
+
+;;; Raw HTTP request using socket
+
+;; would use char-ready? but that becomes blank
+
+;; Rudimentary, for demonstration
+(define (read-lines port)
+  (let ((line (read-line port)))
+    (if (equal? line "0")
+	(list)
+	(cons line (read-lines port)))))
+
+(pp (let ((port (open-tcp-stream-socket "127.0.0.1" 10002)))
+      (write-string "GET /_matrix/client/v3/login HTTP/1.1
+Host: matrix-synapse.mit.edu
+
+" port)
+      (flush-output port)
+      (let ((output (read-lines port)))
+	(close-port port)
+	output)))
+
+(http-get "http://127.0.0.1:10002/_matrix/client/v3/login" '())
