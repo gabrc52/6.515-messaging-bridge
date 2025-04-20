@@ -67,6 +67,11 @@
 
 (http-get "http://127.0.0.1:20001/advice" '())
 
+;; misdirected request
+;; either make it with curl or use the raw socket to specify the correct host header or modify
+;; the http code to make it work
+(curl-http-request "GET" "http://127.0.0.1:20001" "/advice")
+
 (define response (http-get "http://hydrant.mit.edu/latestTerm.json" '()))
 (string->jsexpr (utf8->string (http-response-body response)))
 

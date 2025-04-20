@@ -220,7 +220,7 @@
 (define (json-write-file path j)
   (write-string-to-file path (json->string j)))
 
-#| === Usage Examples (comment out to load) ===
+;;=== Usage Examples ===
 
 (define j (string->json
   "{ \"event\": \"message-received\", \"message\": { \"sender\": \"John\", \"content\": \"Hello!\", \"timestamp\": 1744573905, \"bot\": false } }"))
@@ -246,4 +246,10 @@
 (json-write-file "test.json" j)
 
 (define j2 (json-read-file "test.json"))
-(json-key j2 "event")  ;; => "test"|#
+(json-key j2 "event")  ;; => "test"
+
+;; My test cases should work, let's see
+(define s1 "[1, 2, {\"a\": \"b\"}, {\"b\": {}, \"c\": false}, true, null]")
+(string->json s1)
+(define s2 "{\n  \"preSemester\": {\n    \"urlName\": \"i25\",\n    \"startDate\": \"2025-01-06\",\n    \"endDate\": \"2025-01-31\",\n    \"holidayDates\": [\n      \"2025-01-20\"\n    ]\n  },\n  \"semester\": {\n    \"urlName\": \"s25\",\n    \"startDate\": \"2025-02-03\",\n    \"h1EndDate\": \"2025-03-21\",\n    \"h2StartDate\": \"2025-03-31\",\n    \"endDate\": \"2025-05-13\",\n    \"mondayScheduleDate\": \"2025-02-18\",\n    \"holidayDates\": [\n      \"2025-02-17\",\n      \"2025-03-24\",\n      \"2025-03-25\",\n      \"2025-03-26\",\n      \"2025-03-27\",\n      \"2025-03-28\",\n      \"2025-04-21\"\n    ]\n  }\n}\n")
+(string->json s2)

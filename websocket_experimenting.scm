@@ -21,9 +21,27 @@ Origin: https://mattermost.mit.edu
 (read-line socket) ;; we could run this multiple times in a loop in its own thread
 ;; However, we have a way to check if we can call read-line in the first place
 (char-ready? socket)
+
+;; Demonstration
+(and (char-ready? socket) (read-line socket)) ;; returns #f or gets next message
+
+;; Yeah after a while the connection gets dropped
+
+;; However, putting this on a loop would be blocking. We can check EVERY relevant port/function
+;; (and make it general) in sequence...
+;; Or find some sort of concurrency. But tbh this is fine??? 
+
 (close-port socket)
+     
 ;; It may become stuck at #!eof and #t. This is where reading the spec comes in, maybe websocket has
 ;; a mechanism to tell it "hey, I'm still here listening"
+
+;; Indeed
+;;   NOTE: A Ping frame may serve either as a keepalive or as a means to
+;;   verify that the remote endpoint is still responsive.
+;; https://datatracker.ietf.org/doc/html/rfc6455#section-5.5.2
+;; Asked ChatGPT and it seems like yeah ping is also the only option, and the word "alive" does not
+;; show up again in the IETF thing. But it also says: "Your client should gracefully handle disconnects and automatically reconnect."
 
 ;; THe webhook works!!!!!
 ;; But we need to parse the things in bytes...
