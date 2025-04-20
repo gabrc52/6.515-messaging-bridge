@@ -17,8 +17,13 @@ Origin: https://mattermost.mit.edu
 (define socket (open-tcp-stream-socket "127.0.0.1" 10001))
 (write-string thing socket)
 (flush-output socket)
+;; This function is blocking and may wait forever
 (read-line socket) ;; we could run this multiple times in a loop in its own thread
+;; However, we have a way to check if we can call read-line in the first place
+(char-ready? socket)
 (close-port socket)
+;; It may become stuck at #!eof and #t. This is where reading the spec comes in, maybe websocket has
+;; a mechanism to tell it "hey, I'm still here listening"
 
 ;; THe webhook works!!!!!
 ;; But we need to parse the things in bytes...
