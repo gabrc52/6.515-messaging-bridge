@@ -27,7 +27,7 @@
 
 ;; We are now ready to use TCP sockets directly, and bypass implementing the websocket spec
 
-(define socket (open-tcp-stream-socket "127.0.0.1" 10001))
+(define socket (open-tcp-stream-socket "127.0.0.1" port))
 
 ;; This function is blocking and may wait forever
 (read-line socket) ;; we could run this multiple times in a loop in its own thread
