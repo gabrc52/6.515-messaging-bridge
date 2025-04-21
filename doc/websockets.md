@@ -28,3 +28,6 @@ Instead, websocat can deal with all the implementation details! The following co
 ```sh
 websocat --text --exit-on-eof tcp-listen:127.0.0.1:10001 wss://mattermost.mit.edu/api/v4/websocket -H "Authorization: Bearer blabla"
 ```
+
+TODO: consider changing the `--ping-interval` if the connection gets dropped / and programmatically starting the `websocat`
+process (and restarting if it dies for some reason)

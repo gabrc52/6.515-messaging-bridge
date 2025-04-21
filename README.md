@@ -5,5 +5,5 @@
 This will bridge different messaging services, creating a universal chat abstraction.
 
 Dependencies:
-* stunnel
-* Racket
+* [Racket](https://racket-lang.org/)
+* [websocat](https://github.com/vi/websocat)
