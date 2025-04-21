@@ -25,6 +25,10 @@ Origin: https://mattermost.mit.edu
 ;; Demonstration
 (and (char-ready? socket) (read-line socket)) ;; returns #f or gets next message
 
+;; Demonstration and even with parsing!
+(and (char-ready? socket)
+     (pp (string->jsexpr (read-line socket))))
+
 ;; Yeah after a while the connection gets dropped
 
 ;; However, putting this on a loop would be blocking. We can check EVERY relevant port/function
