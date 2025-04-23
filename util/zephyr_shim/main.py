@@ -3,6 +3,15 @@ import json
 import socket
 import os
 
+# The only reason this Python shim exists is because the other way of receiving Zephyr messages
+# would involve using Zephyr through the C bindings / FFI, and I spent too much time trying to get it
+# to work to no avail, and is probably pretty cumbersome.
+
+# (And it is pointless work if this project might be ported to a different language, probably Racket
+# or one of the other Schemes, after the class ends)
+
+# (And it would require reimplementing logic such as zephyr.receive())
+
 # From https://github.com/sipb/matrix-zephyr-bridge/
 # Copying various Python files into one
 
