@@ -19,6 +19,8 @@
 (define websocket-url "wss://mattermost.mit.edu/api/v4/websocket")
 ;; we'd need to authenticate first and/or get the token from config file
 (define header "Authorization: Bearer otfjuew96pfh8rrfxga3nf7mby")
+
+;; Mattermost, listen at TCP socket
 (define websocat
   (start-subprocess-in-background *websocat-binary*
 				  (vector *websocat-binary* "--text" "--exit-on-eof"
@@ -26,6 +28,17 @@
 					  websocket-url "-H" header)
 				  #()))
 
+(start-subprocess-in-background "/bin/echo" #("/bin/echo" "Hello world") #())
+
+;; Unix socket
+;; NOTE: --unlink unlinks it before starting instead of throwing an error (if there is one still running)
+;;   but it would be better to terminate it
+(define websocat
+  (start-subprocess-in-background *websocat-binary*
+				  (vector *websocat-binary* "--unlink" "--text" "--exit-on-eof"
+					  (string "unix-listen:/tmp/mattermost-socket")
+					  websocket-url "-H" header)
+				  #()))
 ;; We are now ready to use TCP sockets directly, and bypass implementing the websocket spec
 
 ;; Mattermost...
@@ -35,6 +48,10 @@
 ;; Or Signal via sockets
 ;; Better -- no port numbers!
 (define socket (open-unix-stream-socket "/run/user/1000/signal-cli/socket"))
+;; I guess if we wanted to, for Signal CLI we can also use --socket /tmp/signal-socket (instead of the default)
+
+;; Mattermost test socket
+(define socket (open-unix-stream-socket "/tmp/mattermost-socket"))
 
 ;; This function is blocking and may wait forever
 (read-line socket) ;; we could run this multiple times in a loop in its own thread
