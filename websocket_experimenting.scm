@@ -32,6 +32,9 @@
 (define socket (open-tcp-stream-socket "127.0.0.1" mattermost-port))
 ;; ...or Signal
 (define socket (open-tcp-stream-socket "127.0.0.1" signal-port))
+;; Or Signal via sockets
+;; Better -- no port numbers!
+(define socket (open-unix-stream-socket "/run/user/1000/signal-cli/socket"))
 
 ;; This function is blocking and may wait forever
 (read-line socket) ;; we could run this multiple times in a loop in its own thread

@@ -18,15 +18,7 @@ $ signal-cli send -m "Hello world!" +1857yyyyyyy
 
 ## Receiving messages
 
-The `signal-cli receive` command receives the latest batch of messages. However, since we are using TCP sockets from MIT Scheme for most messaging services, the most sensible option seems like the `--tcp` option:
-
-```
-  --socket [SOCKET]      Expose a JSON-RPC interface on a UNIX socket (default $XDG_RUNTIME_DIR/signal-cli/socket).
-  --tcp [TCP]            Expose a JSON-RPC interface on a TCP socket (default localhost:7583).
-  --http [HTTP]          Expose a JSON-RPC interface as http endpoint (default localhost:8080).
-```
-
-We can confirm that it works with netcat, and even displays typing indicators:
+The `signal-cli receive` command receives the latest batch of messages. However, the `daemon` mode creates a long-running connection to Signal and listens for new messages. `signal-cli receive --tcp` opens a port for this, which we can confirm that it works with netcat, and even displays typing indicators:
 
 ```js
 $ nc 127.0.0.1 7583
@@ -37,11 +29,14 @@ $ nc 127.0.0.1 7583
 
 The format of the JSON is [JSON-RPC](https://www.jsonrpc.org/specification) which is a "stateless, light-weight remote procedure call (RPC) protocol".
 
-It is also easy to verify that this works with MIT Scheme, since it supports pure sockets:
+It is pretty easy to use this socket from MIT Scheme:
 
 ```lisp
-(define signal-port 7583) ;; default signal-cli port
-(define socket (open-tcp-stream-socket "127.0.0.1" signal-port))
+;; This works if using `signal-cli daemon --tcp`
+(define socket (open-tcp-stream-socket "127.0.0.1" 7583))
+
+;; Or this works if using `signal-cli daemon --socket`
+(define socket (open-unix-stream-socket "/run/user/1000/signal-cli/socket"))
 
 ;; check on this multiple times
 (and (char-ready? socket)
@@ -77,6 +72,16 @@ This function can be called in a loop and will return `#f` if there's no new mes
     ("viewOnce" . #f))
    ("sourceUuid" . "7ccae375-cd51-4c82-8b1e-7be3280aa485"))))
 ```
+
+## Sending messages or other requests
+
+`signal-cli send` etc would work. However, once it is running on daemon mode, it complains:
+
+```
+INFO  SignalAccount - Config file is in use by another instance, waiting…
+```
+
+Attachments seem to have specific IDs and `getAttachment` works to retrieve them (the TCP connection does not include the attachments themselves).
 
 ## Warning
 
