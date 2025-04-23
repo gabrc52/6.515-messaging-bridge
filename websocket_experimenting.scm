@@ -14,7 +14,8 @@
 ;;   otherwise try adding more helpers with path
 ;;   or put this in a configuration file
 (define *websocat-binary* "/home/rgabriel/.cargo/bin/websocat")
-(define port 10001) ;; here it would allocate an available port, keeping track internally
+(define mattermost-port 10001) ;; here it would allocate an available port, keeping track internally
+(define signal-port 7583) ;; default signal-cli port
 (define websocket-url "wss://mattermost.mit.edu/api/v4/websocket")
 ;; we'd need to authenticate first and/or get the token from config file
 (define header "Authorization: Bearer otfjuew96pfh8rrfxga3nf7mby")
@@ -27,7 +28,10 @@
 
 ;; We are now ready to use TCP sockets directly, and bypass implementing the websocket spec
 
-(define socket (open-tcp-stream-socket "127.0.0.1" port))
+;; Mattermost...
+(define socket (open-tcp-stream-socket "127.0.0.1" mattermost-port))
+;; ...or Signal
+(define socket (open-tcp-stream-socket "127.0.0.1" signal-port))
 
 ;; This function is blocking and may wait forever
 (read-line socket) ;; we could run this multiple times in a loop in its own thread
