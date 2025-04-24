@@ -8,7 +8,7 @@
 
 ;; Changing to be a specific symbol. null is not the same thing as false. IDK what Beomjun's ChatGPT was on
 (define null-object 'null)
-(define (null-object? v) (eqv? v null-object))
+(define (json-null? v) (eqv? v null-object))
 
 (define (json-dict? expr)
   (and
@@ -58,7 +58,7 @@
 
 ;;; === JSON Parser ===
 
-(define (string->json str)
+(define (string->jsexpr str)
   (define len (string-length str))
   (define pos 0)
 
@@ -196,7 +196,7 @@
             acc
             (loop (string-append acc sep (car rest)) (cdr rest))))))
 
-(define (json->string j)
+(define (jsexpr->string j)
   (define (emit v)
     (cond ((json-dict? v)
            (let ((fields (cdr v)))
@@ -213,13 +213,13 @@
           ((number? v) (number->string v))
           ((json-list? v)
            (string-append "[" (string-join (map emit (cdr v)) ", ") "]"))
-          ((null-object? v) "null")
+          ((json-null? v) "null")
           (else (error "Unsupported value" v))))
   (emit j))
 
 ;;=== Usage Examples ===
 
-(define j (string->json
+(define j (string->jsexpr
   "{ \"event\": \"message-received\", \"message\": { \"sender\": \"John\", \"content\": \"Hello!\", \"timestamp\": 1744573905, \"bot\": false } }"))
 
 (json-dict? j) ;; #t
@@ -239,7 +239,7 @@
     (pair "timestamp" 1744573905)
     (pair "bot" #f)))))
 
-(json->string k)
+(jsexpr->string k)
 
 (define j (json-dict (pair "event" "test") (pair "value" 42)))
 (json-write-file "test.json" j)
@@ -249,9 +249,9 @@
 
 ;; My test cases should work, let's see
 (define s1 "[1, 2, {\"a\": \"b\"}, {\"b\": {}, \"c\": false}, true, null]")
-(string->json s1)
+(string->jsexpr s1)
 (define s2 "{\n  \"preSemester\": {\n    \"urlName\": \"i25\",\n    \"startDate\": \"2025-01-06\",\n    \"endDate\": \"2025-01-31\",\n    \"holidayDates\": [\n      \"2025-01-20\"\n    ]\n  },\n  \"semester\": {\n    \"urlName\": \"s25\",\n    \"startDate\": \"2025-02-03\",\n    \"h1EndDate\": \"2025-03-21\",\n    \"h2StartDate\": \"2025-03-31\",\n    \"endDate\": \"2025-05-13\",\n    \"mondayScheduleDate\": \"2025-02-18\",\n    \"holidayDates\": [\n      \"2025-02-17\",\n      \"2025-03-24\",\n      \"2025-03-25\",\n      \"2025-03-26\",\n      \"2025-03-27\",\n      \"2025-03-28\",\n      \"2025-04-21\"\n    ]\n  }\n}\n")
-(string->json s2)
+(string->jsexpr s2)
 
-(string->json "{\"so true\": null}")
-(string->json "[1, 2, 3, 4, 5]")
+(string->jsexpr "{\"so true\": null}")
+(string->jsexpr "[1, 2, 3, 4, 5]")

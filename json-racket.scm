@@ -22,6 +22,8 @@
 					  (lambda (output-port) (write jsexpr output-port))))
 				 'output racket-output))))
 
+(define (json-null? v) (eqv? v null-object))
+
 (define (json-dict? expr)
   (and
    (pair? expr)
