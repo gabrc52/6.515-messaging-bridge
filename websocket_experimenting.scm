@@ -1,5 +1,7 @@
 (load-option 'subprocess)
 
+;; TODO: In general need to handle when it can't be JSON parsed (especially if it reads an #!eof, because it means it exited)
+
 ;; (depends on http code)
 ;;; Trying to use websocket. Maybe the lower level things work
 
@@ -87,6 +89,8 @@
 				 websocket-url "-H" header)
 			 #()))
 (eq? (subprocess-output-port websocat) (subprocess-input-port websocat)) ;; #t
+(eqv? (subprocess-output-port websocat) (subprocess-input-port websocat)) ;; #t
+
 (define socket (subprocess-output-port websocat)) ;; not a socket, but a port
 ;; This same thing should work
 (and (char-ready? socket)
@@ -94,18 +98,42 @@
 (close-port socket)
 (subprocess-quit websocat) ;; was given a process that has terminated.
 
-;; For all of them
-;; sending an empty command - it is recognized
+;; For all of them (Mattermost)
+;; sending an empty command - it is recognized (gives an error successfully)
+
+(define (send-line string port)
+  (display string port)
+  (newline port)
+  (flush-output port))
 
 (begin
-  (display "{}" socket)
-  (newline socket)
-  (flush-output socket)
+  (send-line "{}" socket)
   (pp (string->jsexpr (read-line socket))))
 
+;; on a venv
+
+;; oops, this isn't the equivalent of os.path.join
+;; (define python (->namestring (merge-pathnames (pwd) (->pathname "python-env/bin/python"))))
+
+(cd "~/6.5151/project/messaging-bridge")
+;; Got rid of the venv, too much hassle, just needed to `pip install wheel --upgrade
+;;   before running `pip install .`
+;; (define python (string-append (->namestring (pwd)) "python-env/bin/python"))
+(define zephyr-receive
+  (start-pipe-subprocess
+   "/usr/bin/python" (vector "/usr/bin/python" "util/zephyr_receive.py") #()))
+(subprocess-status zephyr-receive) ;; was exited, bc wrong path. now running
+;; nothing to do with sockets by this point, just reusing the name by this point
+(define socket (subprocess-output-port zephyr-receive))
+;; yeah this aint receiving anything????
+
+(and (char-ready? socket)
+     (pp (string->jsexpr (read-line socket))))
+
+(subprocess-quit zephyr-receive)
+
 ;; I accidentally found some code that calls netcat directly instead of using the sockets LOL
-
-
+ 
 ;;;;;;; Irrelevant now:
 
 ;; It may become stuck at #!eof and #t. This is where reading the spec comes in, maybe websocket has

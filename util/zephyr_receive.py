@@ -1,7 +1,11 @@
 import zephyr
 import json
-import socket
 import os
+
+# Go to directory where this Python file is located
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
 
 # The only reason this Python shim exists is because the other way of receiving Zephyr messages
 # would involve using Zephyr through the C bindings / FFI, and I spent too much time trying to get it
@@ -14,11 +18,6 @@ import os
 
 # From https://github.com/sipb/matrix-zephyr-bridge/
 # Copying various Python files into one
-
-# TODO: make this better / more portable
-# TODO: document how to install zephyr???
-
-SOCKET_PORT = 20000
 
 DEFAULT_OPCODE = ''
 MATRIX_OPCODE = 'matrix'
@@ -36,7 +35,7 @@ def renew_kerberos_tickets():
     """
     os.system(f"kinit {OWN_KERB}@{DEFAULT_REALM} -k -t {KEYTAB_PATH}")
 
-# TODO: this was copied and pasted, way too complex as we don't even need the parser
+# TODO: we don't need the zephyr.subs parsing and writing logic
 
 # TODO: document how to pip install the library and the fact i had to do the workarounds here
 # https://stackoverflow.com/questions/43982543/importerror-no-module-named-cython
@@ -62,11 +61,11 @@ class Zephyr:
         if recipient != '*':
             raise ValueError('Non-wildcard recipients are not supported')
         self._subscriptions.add(triplet)
-        
 
     def __init__(self):
         self._entire_class_subscriptions = set()
-        renew_kerberos_tickets()
+        # Removed for now, fine if I act as myself
+        # renew_kerberos_tickets()
         zephyr.init()
         self._subscriptions = zephyr.Subscriptions()
         with open(ZEPHYR_SUBSCRIPTIONS_FILE, 'r') as f:
@@ -92,12 +91,11 @@ class Zephyr:
             f.write(','.join(triplet) + '\n')
         self._subscribe(triplet)
 
-# at least initializes stuff, even if we never use this object ever again
 z = Zephyr()
 
 def msg_to_json(msg):
     # This is a rather tricky object to serialize
-    # The Python library is just bad.
+    # The Python library is just bad. Or Python is just bad. What is this abomination.
     d = {
         x: getattr(msg, x)
         for x in msg.__dir__()
@@ -108,34 +106,13 @@ def msg_to_json(msg):
     }
     return json.dumps(d)
 
-# TODO: does not handle everything THAT well, but it is functional
-#   Fix: it can't even know if the connection is dropped
-# We can also use a websocket library but it is too high level?
-# Alternatively, just call it as a subprocess in scheme (bypassing TCP) and make sure the port works
-
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = '127.0.0.1'
-server.bind((host, SOCKET_PORT))
-server.listen(1)
-print(f"Listening on {host}:{SOCKET_PORT}... Please connect")
-conn, addr = server.accept()
-print("Accepted connection!")
-
-try:
-    while True:
-        # Catch zephyr exceptions at the top level
-        try:
-            msg: zephyr.ZNotice = zephyr.receive(True)
-            if msg is not None:
-                json_string = msg_to_json(msg)
-                encoded = f"{json_string}\n".encode('utf-8')
-                conn.sendall(encoded)
-                json_string.encode('utf-8')
-        except OSError as e:
-            renew_kerberos_tickets()
-            print(f"ZEPHYR ERROR: {e}")
-except KeyboardInterrupt:
-    print("Shutting down...")
-finally:
-    conn.close()
-    server.close()
+while True:
+    # Catch zephyr exceptions at the top level
+    try:
+        msg: zephyr.ZNotice = zephyr.receive(True)
+        if msg is not None:
+            json_string = msg_to_json(msg)
+            print(json_string, flush=True)
+    except OSError as e:
+        renew_kerberos_tickets()
+        print(f"ZEPHYR ERROR: {e}")
