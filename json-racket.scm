@@ -1,7 +1,6 @@
 ;; An implementation of JSON parsing that delegates all the parsing to Racket
 
 (load-option 'synchronous-subprocess)
-(cd "~/6.5151/project/messaging-bridge")
 
 ;; For here, a jsexpr is either something like a boolean, string, etc, or
 ;; (cons 'dict alist) or (cons 'list list)
@@ -54,6 +53,7 @@
 
 ;; Some test cases
 
+#|
 (define s1 "[1, 2, {\"a\": \"b\"}, {\"b\": {}, \"c\": false}, true, null]")
 (define j1 (string->jsexpr s1))
 (write j1) (newline)
@@ -65,4 +65,4 @@
 (write j2) (newline)
 (define c2 (jsexpr->string j2))
 (display c2) (newline)
-
+|#
