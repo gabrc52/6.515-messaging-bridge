@@ -39,7 +39,7 @@
 					  (string "unix-listen:/tmp/mattermost-socket")
 					  websocket-url "-H" header)
 				  #()))
-;; We are now ready to use TCP sockets directly, and bypass implementing the websocket spec
+;; We are now ready to use sockets directly, and bypass implementing the websocket spec
 
 ;; Mattermost...
 (define socket (open-tcp-stream-socket "127.0.0.1" mattermost-port))
@@ -77,6 +77,34 @@
 ;; Do this if we ever need to exit (but there is no exit condition, the bridge would run forever?)
 (subprocess-quit websocat)
 ;; TODO: not sure what the difference between subprocess-quit and subprocess-stop is
+
+;;; PIPE SUBPROCESSES WORK TOO!
+
+;; Decided to try now to use the pipe subprocess
+(define websocat
+  (start-pipe-subprocess *websocat-binary*
+			 (vector *websocat-binary* "--text"
+				 websocket-url "-H" header)
+			 #()))
+(eq? (subprocess-output-port websocat) (subprocess-input-port websocat)) ;; #t
+(define socket (subprocess-output-port websocat)) ;; not a socket, but a port
+;; This same thing should work
+(and (char-ready? socket)
+     (pp (string->jsexpr (read-line socket))))
+(close-port socket)
+(subprocess-quit websocat) ;; was given a process that has terminated.
+
+;; For all of them
+;; sending an empty command - it is recognized
+
+(begin
+  (display "{}" socket)
+  (newline socket)
+  (flush-output socket)
+  (pp (string->jsexpr (read-line socket))))
+
+;; I accidentally found some code that calls netcat directly instead of using the sockets LOL
+
 
 ;;;;;;; Irrelevant now:
 

@@ -35,5 +35,11 @@ Alternatively, we don't even need TCP or ports! We can simply use Unix sockets
 websocat --text --exit-on-eof unix-listen:/tmp/mattermost-socket wss://mattermost.mit.edu/api/v4/websocket -H "Authorization: Bearer blabla"
 ```
 
+```lisp
+(open-unix-stream-socket "/tmp/mattermost-socket")
+```
+
+Alternatively x2, we don't even need sockets. We can simply call `websocat` using `start-pipe-subprocess` and then get its output port with `subprocess-output-port` (tried doing this for a long time with the `'synchronous-subprocess` option to no avail, but `start-pipe-subprocess` is magical!). Use this output port in the same way we use sockets
+
 TODO: consider changing the `--ping-interval` if the connection gets dropped / and programmatically starting the `websocat`
 process (and restarting if it dies for some reason)
