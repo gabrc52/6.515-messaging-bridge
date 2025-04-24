@@ -138,7 +138,7 @@
                 (begin
                   (skip-whitespace)
                   (if (char=? (peek) #\])
-                      (begin (advance) (json-list (cons v acc)))
+                      (begin (advance) (json-list (reverse (cons v acc))))
                       (error "Expected , or ]"))))))))
 
   (define (parse-object)
