@@ -112,6 +112,7 @@ while True:
         msg: zephyr.ZNotice = zephyr.receive(True)
         if msg is not None:
             json_string = msg_to_json(msg)
+            # FLUSHING IS EXTREMELY IMPORTANT. I wasted like 2 hours trying to debug why it wasn't working.
             print(json_string, flush=True)
     except OSError as e:
         renew_kerberos_tickets()
