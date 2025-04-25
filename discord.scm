@@ -92,11 +92,11 @@
   
   (define *heartbeat-number* null)
   (define (discord-send-heartbeat! discord)
-    (port-send-json discord (make-heartbeat *heartbeat-number*)))
+    (websocket-send-json discord (make-heartbeat *heartbeat-number*)))
 
   (define (discord-identify! discord)
     ;; Identify (authenticate etc) ourselves to Discord
-    (port-send-json
+    (websocket-send-json
      discord
      `(dict
        ("op" . ,op-identify) ;; Important
@@ -107,94 +107,132 @@
 				("browser" . "mit-scheme")
 				("device" . "mit-scheme")))
 	       ;; could also pass a presence, see docs
-	       ("intents" . ,*intents*)))))))
+	       ("intents" . ,*intents*))))))
 
-;;;; Handling for specific events
+  ;;;; Handling for specific events
 
-;; No idea why the Discord Gateway API is so unnecessarily complicated with its
-;; heartbeats and everything
+  ;; No idea why the Discord Gateway API is so unnecessarily complicated with its
+  ;; heartbeats and everything
 
-;; Basic event handler (first prototype)
-;; TODO: Consider using a generic procedure here instead
-;; * We have logic for all base events (keep track of sequence number)
-;; * And we have some logic for specific type events
-;; * And we have predicates that are subsets of other predicates (e.g. all the "dispatch" events)
-(define (handle-event event)
-  ;; Print (for debugging rn)
-  (pp event)
-  ;; Get sequence number and set global variable
-  (let ((sequence-number (json-key event "s")))
-    (set! *heartbeat-number* sequence-number))
-  ;; Handle per type of event
-  (cond ;; "Discord may send the app a Heartbeat (opcode 1) event,
-	;; in which case the app should send a Heartbeat event IMMEDIATELY [emphasis added]".
-	((event-heartbeat? event) (discord-send-heartbeat! discord))
-	;; TODO: "If an app doesn't receive a Heartbeat ACK [in response to a heartbeat],
-	;;        it should close the connection and reconnect."
-	((event-heartbeat-ack? event) (begin))
-	((event-dispatch? event) (handle-dispatch-event event))
-	((event-hello? event)
+  ;; Basic event handler (first prototype)
+  ;; TODO: Consider using a generic procedure here instead
+  ;; * We have logic for all base events (keep track of sequence number)
+  ;; * And we have some logic for specific type events
+  ;; * And we have predicates that are subsets of other predicates (e.g. all the "dispatch" events)
+  (define (handle-event event)
+    ;; Print (for debugging rn)
+    (pp event)
+    ;; Get sequence number and set global variable
+    (let ((sequence-number (json-key event "s")))
+      (set! *heartbeat-number* sequence-number))
+    ;; Handle per type of event
+    (cond ;; "Discord may send the app a Heartbeat (opcode 1) event,
+     ;; in which case the app should send a Heartbeat event IMMEDIATELY [emphasis added]".
+     ((event-heartbeat? event) (discord-send-heartbeat! discord))
+     ;; TODO: "If an app doesn't receive a Heartbeat ACK [in response to a heartbeat],
+     ;;        it should close the connection and reconnect."
+     ((event-heartbeat-ack? event) (begin))
+     ((event-dispatch? event) (handle-dispatch-event event))
+     ((event-hello? event)
+      (begin
+	(set! *heartbeat-interval* (json-key event "d" "heartbeat_interval"))
+	(display "Discord says hello")))
+     (else (display "Unknown event type"))))
+
+  ;; "Dispatch" (word from Discord docs) events are messages and most user-facing features, rather
+  ;; than events only for implementation details.
+  (define (handle-dispatch-event event)
+    (assert (event-dispatch? event))
+    (let ((type (string->symbol (string-downcase (json-key event "t"))))
+	  (content (json-key event "d")))
+      (case type
+	((ready)
 	 (begin
-	   (set! *heartbeat-interval* (json-key event "d" "heartbeat_interval"))
-	   (write-line "Discord says hello")))
-	(else (write-line "Unknown event type"))))
-
-;; "Dispatch" (word from Discord docs) events are messages and most user-facing features, rather
-;; than events only for implementation details.
-(define (handle-dispatch-event event)
-  (assert (event-dispatch? event))
-  (let ((type (string->symbol (string-downcase (json-key event "t"))))
-	(content (json-key event "d")))
-    (case type
-      ((ready)
-       (begin
 	   (display (string "Logged in as " (json-key content "user" "username")))
 	   (set! *session-id* (json-key content "session_id"))
 	   (set! *resume-gateway-url* (json-key content "resume_gateway_url"))))
-      ((guild_create) (display (string "We are in the server " (json-key content "name"))))
-      ((message_create)
-       (let ((name (json-key content "author" "global_name"))
-	     (message (json-key content "content")))
-	 (display (format #false "~A says \"~A\"!" name message))))
-      (else (display (string "Unimplemented dispatch event type " type))))))
+	((guild_create) (display (string "We are in the server " (json-key content "name"))))
+	((message_create)
+	 (let ((name (json-key content "author" "global_name"))
+	       (message (json-key content "content")))
+	   (display (format #false "~A says \"~A\"!" name message))))
+	(else (display (string "Unimplemented dispatch event type " type))))))
+
+  (define (discord-handle-event discord)
+    (let ((json (websocket-next-json discord)))
+      (if json
+	  (handle-event json)
+	  (unless (websocket-connected? discord)
+	    ;; TODO: reconnect with *resume-gateway-url* and *session-id*. See Gateway docs
+	    ;; Alternatively, just starting the whole connection again probably works too (but it might
+	    ;;   lead to some missed messages).
+	    ;; My thought is we should either
+	    ;;    (1) really make sure to reply to heartbeats immediately
+	    ;;       (deal with time!) (because otherwise we might be handling some other event from some other
+	    ;;                          messaging service and by the time we handle this one, it will be too late)
+	    ;;    (2) make sure to reconnect using the Discord-provided instructions
+	    ;; (1) sounds like more effort, so I would go with (2) is just implementing what Discord asks you to,
+	    ;;  and it is more robust because the docs imply that Discord may drop the connection through
+	    ;;  no fault of our own
+	    (display "The connection got dropped! We should reconnect!"))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;; Discord demo ;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define discord
-  (websocket-connect! "wss://gateway.discord.gg/?v=10&encoding=json" '()))
+  (websocket-connect! "wss://gateway.discord.gg/?v=10&encoding=json"
+		      '() ;; No headers necessary.
+		      ;; "When you close the connection to the gateway with close code 1000 or 1001,
+		      ;;  your session will be invalidated and your bot will appear offline."
+		      '("--close-status-code" "1000")))
 
-(when-available (port-next-json discord) handle-event) ;; "Discord says hello"
+;; Previous implementation:
+;;(when-available (websocket-next-json discord) handle-event)
+
+(discord-handle-event discord) ;; "Discord says hello"
+(discord-handle-event discord) ;; #f
 
 ;; TODO: Need to send a heartbeat every 40 seconds following the instructions in the documentation.
 ;; "If your app fails to send a heartbeat event in time, your connection will be closed and you will be forced to Resume."
 
 ;; We need to send the first heartbeat at the beginning
 (discord-send-heartbeat! discord)
-(when-available (port-next-json discord) handle-event)
+(discord-handle-event discord)
 ;; (dict ("d" . null) ("t" . null) ("op" . 11) ("s" . null))
 
 (discord-identify! discord)
-(when-available (port-next-json discord) handle-event) ;; Logged in as Messaging Bridge
-(when-available (port-next-json discord) handle-event) ;; We are in the server gabrielr's server
+(discord-handle-event discord) ;; Logged in as Messaging Bridge
+(discord-handle-event discord) ;; We are in the server gabrielr's server
 
 ;; Send another heartbeat so they don't kill us
 (discord-send-heartbeat! discord)
-(when-available (port-next-json discord) handle-event)
+(discord-handle-event discord)
 ;; (dict ("d" . null) ("t" . null) ("op" . 11) ("s" . null))
 
 ;; After sending a message to the server, we can read it now!
-(when-available (port-next-json discord) handle-event) ;; Unimplemented dispatch event type typing_start
-(when-available (port-next-json discord) handle-event) ;; Gabriel R. says "Hello, this is a test message!"!
+(discord-handle-event discord) ;; Unimplemented dispatch event type typing_start
+(discord-handle-event discord) ;; Gabriel R. says "Hello, this is a test message!"!
 
 ;; NOTE: This is what happens if you don't reply to heartbeats on time:
 ;; `The primitive channel-write, while executing the write system call, received the error: Broken pipe.`
 
+;; To test disconnections, it is surprisingly easy to make it disconnect (by sending it an invalid JSON)
+(websocket-send-json discord '(dict))
+(discord-handle-event discord) ;; The connection got dropped! We should reconnect!
+
 ;; There is a way of closing the connection explicitly that is not just closing the port
 ;; See https://discord.com/developers/docs/events/gateway#initiating-a-disconnect
-;; "When you close the connection to the gateway with close code 1000 or 1001, your session will be invalidated and your bot will appear offline."
-(close-port discord)
+;; "When you close the connection to the gateway with close code 1000 or 1001, your session will be invalidated and your bot will appear offline." (TODO: implement this?)
+;; It also closes the connection if you send it invalid data
+(websocket-close! discord)
 
 ;; TODO: also handle what if Discord disconnects
 ;; "Due to Discord's architecture, disconnects are a semi-regular event and should be expected and handled. When your app encounters a disconnect, it will typically be sent a close code which can be used to determine whether you can reconnect and Resume the session, or whether you have to start over and re-Identify."
+
+;; TODO: how do you know in advance if the connection was closed?
+;; These functions return true (it is open) even if the connection is gone
+(port/open? discord)
+(input-port-open? discord)
+(output-port-open? discord)
+(subprocess-status *latest-subprocess*)
