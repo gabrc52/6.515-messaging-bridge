@@ -14,7 +14,7 @@
 ;;   * Open a unix socket at a specific filename
 ;; I am choosing to go with reading from stdout/stdin, but we can reconsider the other options
 ;; if there are issues.
-(define (websocket-connect websocket-url headers)
+(define (websocket-connect! websocket-url headers)
   (let ((subprocess (start-pipe-subprocess
 		     *websocat-binary*
 		     (list->vector
@@ -28,7 +28,6 @@
     (subprocess-output-port subprocess)))
 
 ;; Closing the port should stop the process too.
-;; (whether --exit-on-eof is set or not, might be because of a MIT Scheme or more low level thing)
 (define websocket-close close-port)
 
 ;; These are just operations on ports, but good for websockets too
@@ -57,10 +56,20 @@
   (when-available (port-next-line port) string->jsexpr))
 (define websocket-next-json port-next-json)
 
+;; TODO: should the get/send be curried? it's very easy to get a getter/sender function instead
+(define (port-send-line port string)
+  (display string port)
+  (newline port)
+  (flush-output port))
+(define (port-send-json port jsexpr)
+  (port-send-line port (jsexpr->string jsexpr)))
+(define websocket-send-line port-send-line)
+(define websocket-send-json port-send-json)
+
 ;;;; Demonstration
 
 (define mattermost
-  (websocket-connect "wss://mattermost.mit.edu/api/v4/websocket"
+  (websocket-connect! "wss://mattermost.mit.edu/api/v4/websocket"
 		     '(("Authorization" . "Bearer otfjuew96pfh8rrfxga3nf7mby"))))
 
 ;; This works now! Returns #f or the next message.
