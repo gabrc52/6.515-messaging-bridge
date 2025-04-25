@@ -5,6 +5,8 @@
 ;; For here, a jsexpr is either something like a boolean, string, etc, or
 ;; (cons 'dict alist) or (cons 'list list)
 
+(define null 'null)
+
 (define (string->jsexpr str)
   (read (open-input-string ;; or string->input-port
 	 (call-with-output-string
@@ -23,6 +25,12 @@
 				 'output racket-output))))
 
 (define (json-null? v) (eqv? v null-object))
+
+(define (json-dict . alist)
+  (cons 'dict alist))
+
+(define (json-list . list)
+  (cons 'list list))
 
 (define (json-dict? expr)
   (and

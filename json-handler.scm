@@ -8,6 +8,8 @@
 
 ;; Changing to be a specific symbol. null is not the same thing as false. IDK what Beomjun's ChatGPT was on
 (define null-object 'null)
+(define null null-object)
+
 (define (json-null? v) (eqv? v null-object))
 
 (define (json-dict? expr)
