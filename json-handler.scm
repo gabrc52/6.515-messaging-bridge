@@ -244,10 +244,10 @@
 (jsexpr->string k)
 
 (define j (json-dict (pair "event" "test") (pair "value" 42)))
-(json-write-file "test.json" j)
+(jsexpr->string j)
 
-(define j2 (json-read-file "test.json"))
-(json-key j2 "event")  ;; => "test"
+;;(define j2 (json-read-file "test.json"))
+;;(json-key j2 "event")  ;; => "test"
 
 ;; My test cases should work, let's see
 (define s1 "[1, 2, {\"a\": \"b\"}, {\"b\": {}, \"c\": false}, true, null]")

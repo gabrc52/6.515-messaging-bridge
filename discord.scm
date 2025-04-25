@@ -212,7 +212,19 @@
 
 (discord-identify! discord)
 (discord-handle-event discord) ;; Logged in as Messaging Bridge
-(discord-handle-event discord) ;; We are in the server gabrielr's server
+
+(with-timings
+ (lambda () (discord-handle-event discord))
+ (lambda (run-time gc-time real-time)
+   (write (internal-time/ticks->seconds run-time))
+   (write-char #\space)
+   (write (internal-time/ticks->seconds gc-time))
+   (write-char #\space)
+   (write (internal-time/ticks->seconds real-time))
+   (newline)))
+;; We are in the server gabrielr's server
+;; * json-handler: .09 0. .084
+;; * json-racket: .09 0. .255
 
 ;; Send another heartbeat so they don't kill us
 (discord-send-heartbeat! discord)

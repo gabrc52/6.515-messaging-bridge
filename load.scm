@@ -22,9 +22,13 @@
 ;;; JSON parser and serializer
 ;; Choose either of them
 (load-relative "json-racket") ;; Racket + subprocess implementation
-;; (load-relative "json-handler") ;; Modified Beomjun's ChatGPT implementation
+;;(load-relative "json-handler") ;; Modified Beomjun's ChatGPT implementation
 
-;; TODO: we could add some redundancy. I think calling Racket may take about half a second, or so?
+;; Example timings to parse GUILD_CREATE Discord JSON event:
+;; * json-handler: .09 0. .084
+;; * json-racket: .09 0. .255
+
+;; TODO: we could add some redundancy.
 ;;   If we can make the native Scheme JSON parser fail when it has a JSON it cannot parse
 ;;   (instead of giving wrong answers, which I am not sure if it does or not),
 ;;   then we can catch the exception and call the Racket handler instead.
