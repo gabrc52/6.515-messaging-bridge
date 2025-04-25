@@ -19,9 +19,17 @@
 (load-option 'subprocess)
 (load-option 'format)
 
+;;; JSON parser and serializer
 ;; Choose either of them
 (load-relative "json-racket") ;; Racket + subprocess implementation
 ;; (load-relative "json-handler") ;; Modified Beomjun's ChatGPT implementation
+
+;; TODO: we could add some redundancy. I think calling Racket may take about half a second, or so?
+;;   If we can make the native Scheme JSON parser fail when it has a JSON it cannot parse
+;;   (instead of giving wrong answers, which I am not sure if it does or not),
+;;   then we can catch the exception and call the Racket handler instead.
+;;   e.g. I don't think it handles unicode escape codes? But I don't know all of JSON so I don't know
+;;        what it returns a wrong answer to or fails at.
 
 ;; Uses curl
 (load-relative "http")
