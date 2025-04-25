@@ -247,9 +247,3 @@
 ;; TODO: also handle what if Discord disconnects
 ;; "Due to Discord's architecture, disconnects are a semi-regular event and should be expected and handled. When your app encounters a disconnect, it will typically be sent a close code which can be used to determine whether you can reconnect and Resume the session, or whether you have to start over and re-Identify."
 
-;; TODO: how do you know in advance if the connection was closed?
-;; These functions return true (it is open) even if the connection is gone
-(port/open? discord)
-(input-port-open? discord)
-(output-port-open? discord)
-(subprocess-status *latest-subprocess*)
