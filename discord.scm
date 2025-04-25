@@ -187,7 +187,6 @@
 
 ;; NOTE: This is what happens if you don't reply to heartbeats on time:
 ;; `The primitive channel-write, while executing the write system call, received the error: Broken pipe.`
-;; Also: "Discord may send the app a Heartbeat (opcode 1) event, in which case the app should send a Heartbeat event immediately."
 
 ;; There is a way of closing the connection explicitly that is not just closing the port
 ;; See https://discord.com/developers/docs/events/gateway#initiating-a-disconnect
