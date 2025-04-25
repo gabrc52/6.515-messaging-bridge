@@ -115,7 +115,11 @@
 ;; This works now! Returns #f or the next message.
 (pp (websocket-next-json mattermost))
 
+(websocket-connected? mattermost) ;; #t
+
 (websocket-close! mattermost)
+
+(websocket-connected? mattermost) ;; #f
 
 ;;;; Done
 
