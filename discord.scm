@@ -230,6 +230,14 @@
 (websocket-send-json discord '(dict))
 (discord-handle-event discord) ;; The connection got dropped! We should reconnect!
 
+;; Simple stub loop. It does not handle multiple websockets (for multiple services).
+;; nor does it send the heartbeats every *heartbeat-interval* yet
+(let loop ()
+  (unless (websocket-connected? discord) (websocket-close! discord))
+  (discord-handle-event discord)
+  (loop))
+;; This is blocking and turns on my laptop fans. Maybe there is a better way
+
 ;; There is a way of closing the connection explicitly that is not just closing the port
 ;; See https://discord.com/developers/docs/events/gateway#initiating-a-disconnect
 ;; "When you close the connection to the gateway with close code 1000 or 1001, your session will be invalidated and your bot will appear offline." (TODO: implement this?)

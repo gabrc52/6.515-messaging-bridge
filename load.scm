@@ -34,3 +34,5 @@
 ;; Uses curl
 (load-relative "http")
 
+;; Uses websockets
+(load-relative "websockets")
