@@ -1,3 +1,6 @@
+;; Discord reference documentation for receiving: https://discord.com/developers/docs/events/gateway
+;; As for sending messages and performing actions, it is a HTTPS API
+
 ;;;; Define constants and functions
 
 (begin ;; Wrapped in begin to allow pressing Alt+Enter below and defining them all in the REPL at once
