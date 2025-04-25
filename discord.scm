@@ -94,6 +94,7 @@
   (define (discord-send-heartbeat! discord)
     (websocket-send-json discord (make-heartbeat *heartbeat-number*)))
 
+  ;; NOTE: "Clients are limited to 1000 IDENTIFY calls to the websocket in a 24-hour period"
   (define (discord-identify! discord)
     ;; Identify (authenticate etc) ourselves to Discord
     (websocket-send-json
@@ -106,8 +107,16 @@
 				("os" . ,microcode-id/operating-system-variant)
 				("browser" . "mit-scheme")
 				("device" . "mit-scheme")))
-	       ;; could also pass a presence, see docs
-	       ("intents" . ,*intents*))))))
+	       ("intents" . ,*intents*)
+	       ;; This is optional, just for aesthetic purposes
+	       ("presence" . (dict
+			      ("afk" . #f)
+			      ("status" . "online")
+			      ("activities" . (list (dict
+						     ("name" . "MIT/GNU Scheme")
+						     ;; 0 is "playing" (as in a game)
+						     ;; 4 is "custom"
+						     ("type" . 0)))))))))))
 
   ;;;; Handling for specific events
 
