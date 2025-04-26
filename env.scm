@@ -1,3 +1,12 @@
+(define do-run-env-tests #t)
+(define (run-env-test result)
+    (if do-run-env-tests
+        result
+        #t))
+(define (run-env-tests . results)
+    (map run-env-test results)
+)
+
 (define (read-file filename)
     (let ((file-port (open-input-file filename)))
         (read-string (char-set) file-port)))
@@ -17,11 +26,13 @@
     (loop string-to-split (list) 0))
 
 ;; Tests
-(split-string "asdf" "9")
-(split-string "asdf--jsdf" "--")
-(split-string "key=value" "=")
-(split-string "key1=value1\nkey2=value2" "\n")
-(split-string (read-file ".env") "\n")
+(run-env-tests
+    (split-string "asdf" "9")
+    (split-string "asdf--jsdf" "--")
+    (split-string "key=value" "=")
+    (split-string "key1=value1\nkey2=value2" "\n")
+    (split-string (read-file ".env") "\n"))
+
 
 ;; Parses a .env file to a list of pairs
 (define (parse-env env-string)
@@ -30,7 +41,8 @@
 )
 
 ;; Tests
-(parse-env (read-file ".env"))
+(run-env-test
+    (parse-env (read-file ".env")))
 
 ;; Fetches a variable from the .env file
 (define (get-from-env var #!optional env-filename)
@@ -38,6 +50,7 @@
         (let ((pairs (parse-env (read-file env-filename))))
             (cadr (assoc var pairs)))))
 ;; Tests
-(get-from-env "discord-token")
+(run-env-test
+    (get-from-env "discord-token"))
 
 ;; TODO: maybe plop these into the environment with a singular command to avoid re-parsing & ease development
