@@ -1,7 +1,11 @@
+;; Configuration:
+; (define *project-home* "~/git/messaging-bridge")
+(define *project-home* "~/6.5151/project/messaging-bridge")
+
 ;; cd to the right place if running on emacs
 (when
   (pathname=? (user-home-directory (current-user-name)) (pwd))
-  (cd "~/6.5151/project/messaging-bridge"))
+  (cd *project-home*))
 
 ;; Only works when executing, not when on emacs
 ;; Stolen from https://github.com/ProjectMAC/propagators/blob/master/load.scm
@@ -40,3 +44,6 @@
 
 ;; Uses websockets
 (load-relative "websockets")
+
+;; Load from .env file
+(load-relative "env")

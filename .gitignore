@@ -3,3 +3,4 @@
 /scratch
 /python-env
 __pycache__
+.env
