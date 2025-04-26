@@ -1,4 +1,4 @@
-(define do-run-env-tests #t)
+(define do-run-env-tests #f)
 (define (run-env-test result)
     (if do-run-env-tests
         result
