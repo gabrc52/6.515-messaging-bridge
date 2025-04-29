@@ -1,9 +1,7 @@
 ;; Depends on http.scm for the header builder
 ;; Depends on a JSON implementation to get a JSON
 
-(define *websocat-binary*
-  (or (get-environment-variable "WEBSOCAT_BINARY")
-      "/home/rgabriel/.cargo/bin/websocat"))
+(define *websocat-binary* (os/find-program "websocat" ""))
 
 ;; The port is almost enough for everything, but not for e.g. knowing if the connection was closed
 ;; because the port acts like it is still open. So let's have a record type with both.
@@ -88,7 +86,7 @@
       (callback obj-or-false)
       #f))
 
-;; TODO: handle when you can't parse JSON
+;; TODO: handle when you can't parse JSON or when the port reaches #!eof
 (define (port-next-json port)
   (when-available (port-next-line port) string->jsexpr))
 (define (websocket-next-json websocket)
