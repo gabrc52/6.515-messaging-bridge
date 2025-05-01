@@ -2,6 +2,12 @@
 ;; TODO start the process
 ;; signal-cli daemon --socket /tmp/socket
 
+(define *signal-socket* "/tmp/signal-socket")
+(define *signal-binary* (os/find-program "signal-cli" ""))
+(define signal-process
+  (start-pipe-subprocess *signal-binary*
+			 (vector *signal-binary* "daemon" "--socket" "/tmp/signal-socket")
+			 #()))
 (define socket (open-unix-stream-socket "/tmp/signal-socket"))
 
 ;; Group ID of test chat I created
