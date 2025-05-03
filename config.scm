@@ -46,9 +46,9 @@
     (let ((constructor (get-platform-config-constructor platform)))
       (apply constructor plist)))
   (apply %parse-platform platform-options))
-  
-;;(define (load-platforms! config-platforms)
-;;  ...)
+
+;; Associative list of all clients (hash table would be overkill)
+(define *all-clients* '())
 
 (define (load-config! config)
   (guarantee (list-beginning-with? 'config) config)
@@ -56,15 +56,9 @@
   (let ((config-bridge (cadr config))
 	(config-platforms (cddr config)))
     (load-linked-chats! (parse-bridge config-bridge))
-    
-    ;;(for-each (lambda 
-    
-    ;;(for-each load-platform! config-platforms)))
-    
-    ;;(for-each get-platform-config-constructor
-    
-    ;; TODO: initialize platforms
-    ))
+    (let ((clients (map make-client! config-platforms)))
+      (set! *all-clients*
+	    (map (lambda (client) (cons (client-platform client) client)) clients)))))
 
 (define (load-config-file! file)
   (load-config! (read-sexp-from-file file)))
