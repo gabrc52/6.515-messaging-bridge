@@ -196,6 +196,8 @@
 		      ;;  your session will be invalidated and your bot will appear offline."
 		      '("--close-status-code" "1000")))
 
+
+
 ;; Previous implementation:
 ;;(when-available (websocket-next-json discord) handle-event)
 
