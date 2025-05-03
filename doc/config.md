@@ -28,3 +28,7 @@ Identifiers may have multiple arguments depending on the platform, for example `
 TODO define platform options
 
 TODO give an example
+
+For secrets such as tokens you can use `(env "DISCORD_TOKEN")` instead of the literal secret to get the relevant env variable. This makes config files shareable without having to share secrets! (TODO(Stephen): implement)
+
+*env variables come from `.env`, a newline-delimited list of `key=value`. 
