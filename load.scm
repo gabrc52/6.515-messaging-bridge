@@ -55,7 +55,7 @@
 
 ;; These might change in their file structure, this for now:
 (load-relative "util") ;; misc utilities
-(load-relative "bridge") ;; might need renaming
+(load-relative "types")
 (load-relative "config")
 
 ;; TODO: we might need a custom load for each platform
