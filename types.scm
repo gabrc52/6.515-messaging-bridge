@@ -34,50 +34,76 @@
 ;; MAY NEED user-identifier etc
 ;; MAY NEED generic get-platform?
 
-;;; Config
+;;; Platform-based config
 
-;;; Authentication / Authorization
+;; STRETCH GOAL: Identifiers should be associated with a name, and platform-specific configs would
+;;   also need an arbitrary name (default to platform name). This way, we can also have more than one
+;;   instance of a specific platform (for siloed platforms such as Slack and Mattermost where 2 different
+;;   hosted instances or workspaces are completely separate including usernames, tokens, etc.)
+;;   Since it is such an uncommon use case, we are fine foregoing some flexibility here. If I ever decide
+;;   to implement it, I am hoping the refactoring won't be too bad since I kept it in mind when implementing.
+;; ACTUALLY: We would be able to wrap everything without needing to do modifications. We can programmatically
+;;   create more platforms such as slack1, slack2, etc. along with constructors/generic procedures/etc.
 
-;; I don't like this
+;;; Platforms may want to use these (they are reusable, even if not in the base platform-config)
 
-(define base-auth?
-  (make-type 'base-auth (list)))
-(define no-auth
-  (type-instantiator base-auth?))
-
-;; Token-based configuration
-(define token-auth:token
-  (make-property 'token
+;; (Usernames are useful whether there is a password or not, API endpoints may need it explicitly)
+(define platform-config:username
+  (make-property 'username
 		 'predicate string?))
-(define token-auth?
-  (make-type 'token-auth (list token-auth:token)))
-(set-predicate<=! token-auth? base-auth?)
 
-;; We could add a username/password based configuration if we need it.
+(define platform-config:password
+  (make-property 'password
+		 'predicate string?))
 
-;;; Overall configuration
+;; TODO: we could allow setting the token to some "undefined" option so that it is obtained by a password
+(define platform-config:access-token
+  (make-property 'access-token
+		 'predicate string?))
 
-;; STRETCH GOAL: This could be overriden to have more than one instance per app.
-(define base-config:name
-  (make-property 'name
+;; This might be redundant. Redundancy is good, no?
+(define platform-config:platform-id
+  (make-property 'platform-id
 		 'predicate symbol?))
-(define base-config:auth
-  (make-property 'auth
-		 'predicate base-auth?
-		 'default-supplier no-auth))
-(define base-config?
-  (make-type 'base-config (list base-config:name)))
 
-;;; Platform-specific configs (TODO: move to their own file in platforms/ to make them self-contained)
+(define platform-config?
+  (make-type 'platform-config (list platform-config:platform-id)))
 
-(define mattermost-config?
-  (make-type 'mattermost-config (list)))
-;; TODO: what if I want to mandate that auth must be token-auth and not base-auth??
-;;   easy with OOP
-;; Or what if I want to set 'name to 'mattermost every time? it becomes a wrapper yeah
-;; I think we can actually make mattermost a subtype of token and so on...
+;; Defining getters (for convenience)
+(define config-username (property-getter platform-config:username platform-config?))
+(define config-password (property-getter platform-config:password platform-config?))
+(define config-access-token (property-getter platform-config:access-token platform-config?))
+(define config-platform-id (property-getter platform-config:platform-id platform-config?))
 
-;;; TODO think of a better way of getting the constructor
+;;; For platforms that perform actions using HTTP(S) requests.
 
+;; For self-hosted open-source messaging platforms, maybe even for Slack?
+;; e.g. https://matrix-synapse.mit.edu, https://mattermost.mit.edu
+;; And we can hardcode it for other apps
+;; (Discord uses a different websocket baseurl but there is an endpoint to fetch it, so that is fine.)
+(define http-platform-config:base-url
+  (make-property 'base-url
+		 'predicate string?))
+;; TODO: maybe we want a better URL-specialized predicate
+;; NOTE: The SDF implementation of user-defined types doesn't actually seem to use the predicate to perform
+;;   validation when constructing. Or hmm. It should. I think it did during the adventure game with bias?
+;; TODO: check the user-defined-types code / ask gjs
 
-(set-predicate<=! mattermost-config? base-config?)
+(define http-platform-config?
+  (make-type 'http-platform-config (list http-platform-config:base-url)))
+
+;; Getter
+(define config-base-url (property-getter http-platform-config:base-url http-platform-config?))
+
+(set-predicate<=! http-platform-config? platform-config?)
+
+;;; We need a way to set default values for subtype constructors, like on OOP.
+
+;; Defaults is a plist
+(define (type-instantiator-with-defaults type defaults)
+  ;; This does not check for duplicates, but I'd blame the "plist" parser.
+  ;;   It is probably fine because we append the defaults to the front, so if a property is repeated
+  ;;   in the plist, it is effectively ignored as expected.
+  (lambda plist
+    (apply (type-instantiator type) (append defaults plist))))
+
