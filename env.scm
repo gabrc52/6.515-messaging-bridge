@@ -49,7 +49,7 @@
         (let ((pairs (parse-env (read-file env-filename))))
             (cadr (assoc var pairs)))))
 ;; Tests
-(run-env-test
-    (get-from-env "discord-token"))
+; (run-env-test
+;     (get-from-env "discord-token"))
 
 ;; TODO: maybe plop these into the environment with a singular command to avoid re-parsing & ease development
