@@ -1,3 +1,6 @@
+;;; Generic predicate
+(define mattermost? (platform-predicate 'mattermost))
+
 ;;; Config format
 (define mattermost-config?
   (make-type 'mattermost-config
@@ -12,12 +15,17 @@
 				   '(platform-id mattermost)))
   
 (define-generic-procedure-handler get-platform-config-constructor
-  (match-args (platform-is? 'mattermost))
+  (match-args (platform-predicate 'mattermost))
   (lambda (platform) make-mattermost-config))
 
 ;;; Bridge constructor
-(define (make-mattermost config)
+(define (make-mattermost! config)
+  (write-line "A mattermost client has been created")
   (lambda (message)
     (case message
       ((get-platform-id) 'mattermost)
       (else (error "not implemented")))))
+(define-generic-procedure-handler make-client!
+  (match-args mattermost-config?)
+  make-mattermost!)
+
