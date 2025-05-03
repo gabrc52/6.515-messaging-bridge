@@ -16,5 +16,8 @@
   (lambda (platform) make-mattermost-config))
 
 ;;; Bridge constructor
-;;(define (make-mattermost config)
-;;  ...)
+(define (make-mattermost config)
+  (lambda (message)
+    (case message
+      ((get-platform-id) 'mattermost)
+      (else (error "not implemented")))))

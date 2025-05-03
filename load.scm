@@ -56,9 +56,11 @@
 ;; These might change in their file structure, this for now:
 (load-relative "util") ;; misc utilities
 (load-relative "types")
+(load-relative "bridge")
 (load-relative "config")
 
-;; TODO: we might need a custom load for each platform
+;; Load each platform
+(load-relative "platforms/mattermost")
 
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
