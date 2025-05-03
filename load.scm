@@ -1,3 +1,8 @@
+;; TODO: don't hardcode, maybe get from .env (after reading it first?)
+;;  but when ready, we can bring all the files we need here
+(load "~/6.5151/sdf/manager/load")
+(manage 'new 'user-defined-types)
+
 ;; Configuration:
 ; (define *project-home* "~/git/messaging-bridge")
 (define *project-home* "~/6.5151/project/messaging-bridge")
@@ -47,3 +52,16 @@
 
 ;; Load from .env file
 (load-relative "env")
+
+;; These might change in their file structure, this for now:
+(load-relative "util") ;; misc utilities
+(load-relative "bridge") ;; might need renaming
+(load-relative "config")
+
+;; TODO: we might need a custom load for each platform
+
+;; The actual logic of starting the bridge makes more sense to have in another file?
+
+;; Load the config file
+(load-config-file! "config.txt")
+
