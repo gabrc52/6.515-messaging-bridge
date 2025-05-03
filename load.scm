@@ -63,5 +63,5 @@
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file
-(load-config-file! "config.txt")
+;;(load-config-file! "config.txt")
 

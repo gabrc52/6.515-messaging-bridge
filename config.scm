@@ -1,49 +1,3 @@
-;;; Authentication / Authorization
-
-;; I don't like this
-
-(define base-auth?
-  (make-type 'base-auth (list)))
-(define no-auth
-  (type-instantiator base-auth?))
-
-;; Token-based configuration
-(define token-auth:token
-  (make-property 'token
-		 'predicate string?))
-(define token-auth?
-  (make-type 'token-auth (list token-auth:token)))
-(set-predicate<=! token-auth? base-auth?)
-
-;; We could add a username/password based configuration if we need it.
-
-;;; Overall configuration
-
-;; STRETCH GOAL: This could be overriden to have more than one instance per app.
-(define base-config:name
-  (make-property 'name
-		 'predicate symbol?))
-(define base-config:auth
-  (make-property 'auth
-		 'predicate base-auth?
-		 'default-supplier no-auth))
-(define base-config?
-  (make-type 'base-config (list base-config:name)))
-
-;;; Platform-specific configs (TODO: move to their own file in platforms/ to make them self-contained)
-
-(define mattermost-config?
-  (make-type 'mattermost-config (list)))
-;; TODO: what if I want to mandate that auth must be token-auth and not base-auth??
-;;   easy with OOP
-;; Or what if I want to set 'name to 'mattermost every time? it becomes a wrapper yeah
-;; I think we can actually make mattermost a subtype of token and so on...
-
-;;; TODO think of a better way of getting the constructor
-
-
-(set-predicate<=! mattermost-config? base-config?)
-
 ;;; Config parsing
 
 (define (read-sexp-from-file file)
@@ -132,12 +86,22 @@
   (hash-table-clear! *linked-chats*)
   (for-each link-chats! list-of-bridges))
 
+(define (load-platforms! config-platforms)
+  
+  ...)
+
 (define (load-config! config)
   (guarantee (list-beginning-with? 'config) config)
   ;; The first element of config must be the linked chats, then all the platform-specific options
   (let ((config-bridge (cadr config))
 	(config-platforms (cddr config)))
     (load-linked-chats! (parse-bridge config-bridge))
+    ;;(for-each (lambda 
+    
+    ;;(for-each load-platform! config-platforms)))
+    
+    ;;(for-each get-platform-config-constructor
+    
     ;; TODO: initialize platforms
     ))
 
