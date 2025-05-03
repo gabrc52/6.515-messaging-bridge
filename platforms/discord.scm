@@ -2,11 +2,13 @@
 ;; As for sending messages and performing actions, it is a HTTPS API
 
 ;;;; Define constants and functions
+(load "load.scm")
 
 (begin ;; Wrapped in begin to allow pressing Alt+Enter below and defining them all in the REPL at once
 
   ;; TODO: don't hardcode this, use a config file. Invalidate this token before releasing repo publicly
-  (define *discord-token* "OTAxMjUxMDU1MjczMjcxMzE3.GEjI7x.hScW3U9Y7qF7QeOekRwpUdEPwzzDt8smW8YjS4")
+;   (define *discord-token* "OTAxMjUxMDU1MjczMjcxMzE3.GEjI7x.hScW3U9Y7qF7QeOekRwpUdEPwzzDt8smW8YjS4")
+  (define *discord-token* (get-from-env "discord-token"))
 
   ;; From https://github.com/simmsb/racket-cord/blob/master/private/gateway.rkt
   ;; I did not read the Racket code but it may in come handy to port some of it to MIT/GNU Scheme
@@ -34,6 +36,17 @@
 
   ;; TODO: is there a better way to define these predicates for all the types?
   ;;   Would it help or would it just be unnecessary?
+
+  (define (make-event-predicate op)
+    (lambda (event)
+        (= (discord-op event) op)))
+
+;   (define event-heartbeat? (make-event-predicate op-heartbeat))
+;   (define event-ready? (make-event-predicate op-ready))
+;   (define event-heartbeat-ack? (make-event-predicate op-heartbeat-ack))
+;   (define event-dispatch? (make-event-predicate op-dispatch))
+;   (define event-hello? (make-event-predicate op-hello))
+
   (define (event-heartbeat? event)
     (= (discord-op event) op-heartbeat))
   (define (event-ready? event)
