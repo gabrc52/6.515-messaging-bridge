@@ -14,23 +14,22 @@
 ;; Given a string, return a list of strings separated in the original string by `delimiter`
 ;; string-to-split and delimiter must not be the empty string
 (define (split-string string-to-split delimiter)
-    (define (loop string string-list start-index)
+    (define (loop string string-list)
         (let ((next-index (string-search-forward delimiter string)))
             (if (not next-index)
                 (append string-list (list string))
                 (loop
                     (substring string (+ next-index (string-length delimiter)))
-                    (append string-list (list (substring string start-index next-index))) 
-                    (+ next-index (string-length delimiter))
+                    (append string-list (list (substring string 0 next-index))) 
                 ))))
-    (loop string-to-split (list) 0))
+    (loop string-to-split (list)))
 
 ;; Tests
 (run-env-tests
     (split-string "asdf" "9")
     (split-string "asdf--jsdf" "--")
     (split-string "key=value" "=")
-    (split-string "key1=value1\nkey2=value2" "\n")
+    (split-string "key1=value1\nkey2=value2\nkey3=value3" "\n")
     (split-string (read-file ".env") "\n"))
 
 
