@@ -47,3 +47,19 @@
                       [discord 787146644264189975]))
 ||#
 
+;;; Generic platform predicates
+
+((platform-predicate 'discord) 'a)
+;Value: #f
+
+((platform-predicate 'discord) 'discord)
+;Value: #t
+
+((platform-predicate 'discord) (lambda (x) 'discord))
+;Value: #t
+
+((platform-predicate 'discord) (lambda (x) 'a))
+;Value: #f
+
+((platform-predicate 'discord) #t)
+;Inapplicable generic procedure: platform-is? (#t discord)
