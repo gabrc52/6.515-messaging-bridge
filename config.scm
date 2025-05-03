@@ -43,7 +43,7 @@
   
 ;; Parse the options specific to a platform 
 (define get-platform-config-constructor
-  (most-specific-generic-procedure 'parse-platform-config
+  (most-specific-generic-procedure 'get-platform-config-constructor
 				   1
 				   #f))
 
@@ -86,9 +86,8 @@
   (hash-table-clear! *linked-chats*)
   (for-each link-chats! list-of-bridges))
 
-(define (load-platforms! config-platforms)
-  
-  ...)
+;;(define (load-platforms! config-platforms)
+;;  ...)
 
 (define (load-config! config)
   (guarantee (list-beginning-with? 'config) config)
