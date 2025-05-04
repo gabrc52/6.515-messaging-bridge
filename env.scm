@@ -1,6 +1,9 @@
 (define (read-file filename)
-    (let ((file-port (open-input-file filename)))
-        (read-string (char-set) file-port)))
+    (if (or (not (file-exists? filename)) (eq? (file-length filename) 0))
+        ""
+        (let ((file-port (open-input-file filename)))
+            (read-string (char-set) file-port))))
+        
 
 ;; Given a string, return a list of strings separated in the original string by `delimiter`
 ;; string-to-split and delimiter must not be the empty string
@@ -22,9 +25,12 @@
 )
 
 ;; Fetches a variable from the .env file
-(define (get-from-env var #!optional env-filename)
+(define (get-from-env key #!optional env-filename)
     (let ((env-filename (if (default-object? env-filename) ".env" env-filename)))
         (let ((pairs (parse-env (read-file env-filename))))
-            (cadr (assoc var pairs)))))
+            (let ((val (assoc key pairs)))
+                (if (not val)
+                    val
+                    (cadr val))))))
 
 ;; TODO: maybe plop these into the environment with a singular command to avoid re-parsing & ease development
