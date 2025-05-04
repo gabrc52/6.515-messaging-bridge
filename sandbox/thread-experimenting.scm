@@ -25,6 +25,10 @@
 
 ;; We don't need a continuation, set it to #f. TODO: when do we need continuations?
 
+;; It is important that the port is not created in the thread itself.
+;; This way, we can for example have a *different* thread take care of sending heartbeats in the case of Discord
+;; (and we need a lock to only allow one thread to send stuff to the port, just in case)
+
 (define mattermost-thread
   (create-thread
    #f
@@ -47,4 +51,14 @@
 
 ;; This test is successful!! We are listening on two ports at the same time without turning on the fan.
 ;; Messages from either Signal or Mattermost get printed out successfully.
+
+;; We would need to handle what if something dies / connection drops / etc
+
+;; Upon `pkill signal-cli`:
+;The thread #[thread 12] signalled an error #[condition 13 "wrong-type-argument"]:
+;The object #!eof, passed as an argument to string-length, is not the correct type.
+
+(websocket-close! mattermost)
+;The thread #[thread 14] signalled an error #[condition 15 "simple-error"]:
+;Unsupported argument: #f
 
