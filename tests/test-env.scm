@@ -1,4 +1,6 @@
-(load "../env.scm")
+;;; Run this from the project root
+
+(load "env.scm")
 
 (split-string "asdf" "9")
 (split-string "asdf--jsdf" "--")
@@ -8,5 +10,4 @@
 
 (parse-env (read-file ".env"))
 
-(run-env-test
-    (get-from-env "discord-token"))
+(get-from-env "discord-token")
