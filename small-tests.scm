@@ -17,6 +17,28 @@
 (identifier=? (make-identifier 'zephyr '("sipb" "office")) (make-identifier 'zephyr '("sipb" "help")))
 ;Value: #f
 
+;;; Generic platform predicates
+
+((platform-predicate 'discord) 'a)
+;Value: #f
+
+((platform-predicate 'discord) 'discord)
+;Value: #t
+
+((platform-predicate 'discord) (lambda (x) 'discord))
+;Value: #t
+
+((platform-predicate 'discord) (lambda (x) 'a))
+;Value: #f
+
+((platform-predicate 'discord) #t)
+;Inapplicable generic procedure: platform-is? (#t discord)
+
+;;; Get constructor (uses these platform predicates)
+
+(get-platform-config-constructor 'mattermost)
+
+
 ;; Declines invalid config as expected
 (load-config!
  '(config
@@ -47,19 +69,26 @@
                       [discord 787146644264189975]))
 ||#
 
-;;; Generic platform predicates
+;; Initializing clients
 
-((platform-predicate 'discord) 'a)
-;Value: #f
+(load-config!
+ '(config
+   (bridge
+    (linked (mattermost "test") (mattermost "test2")))))
+(pp (hash-table->alist *linked-chats*))
+;;(([mattermost test2] [mattermost test])
+;; ([mattermost test] [mattermost test2]))
 
-((platform-predicate 'discord) 'discord)
-;Value: #t
+(load-config!
+ '(config
+   (bridge
+    (linked (mattermost "test") (mattermost "test2")))
+   (mattermost
+    base-url "https://mattermost.mit.edu"
+    access-token "otfjuew96pfh8rrfxga3nf7mby")))
+*all-clients*
+;Value: ((mattermost . #[compound-procedure 13]))
 
-((platform-predicate 'discord) (lambda (x) 'discord))
-;Value: #t
+((cdar *all-clients*) 'get-platform-id)
+;Value: mattermost
 
-((platform-predicate 'discord) (lambda (x) 'a))
-;Value: #f
-
-((platform-predicate 'discord) #t)
-;Inapplicable generic procedure: platform-is? (#t discord)
