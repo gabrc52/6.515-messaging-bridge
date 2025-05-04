@@ -107,3 +107,30 @@
   (lambda plist
     (apply (type-instantiator type) (append defaults plist))))
 
+;;; Events
+
+;; If record types are too constraining, switch to user-defined types from SDF.
+;; But I anticipate they are all a platform and a body, maybe a timestamp
+
+(define-record-type <event>
+  (%make-event platform body timestamp)
+  event?
+  (platform event-platform)
+  (body event-body)
+  ;; Time this was instantiated, not received
+  (timestamp event-timestamp))
+
+(register-predicate! event? 'event)
+
+(define (make-event platform body)
+  (%make-event platform body (get-universal-time)))
+
+;; TODO: Remove if unused
+;; discord? is too broad. We want to have discord-event? <= event? and so on
+;; Actually we want subtypes in a different way so hmmm think about it
+;; No, I think we can just use event-platform, we don't want per-platform subtypes
+(define (make-event-predicate platform)
+  (lambda (event)
+    (and (event? event)
+	 (platform-ids-equal? (event-platform event) platform))))
+

@@ -32,6 +32,10 @@
       (match-args identifier?)
       (lambda (identifier) (platform-ids-equal? (identifier-platform identifier) target-platform-id)))
 
+    (define-generic-procedure-handler procedure
+      (match-args event?)
+      (lambda (event) (platform-ids-equal? (event-platform event) target-platform-id)))
+    
     procedure))
 
 (define ((list-beginning-with? symbol) config)
@@ -53,4 +57,6 @@
 		   (unless (eqv? item1 item2)
 		     (f item1 item2)))))
 
+;;; Reverse Chaining Generic Procedures
+;; TODO: implement if needed
 
