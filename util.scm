@@ -10,33 +10,32 @@
        (of-exact-arity? f 1)))
 
 (define platform-id? symbol?)
+(define platform-ids-equal? eqv?)
 
-(define platform-is?
-  (most-specific-generic-procedure
-   'platform-is?
-   2 ;; object platform
-   #f))
+;; Reimplementing platform-is? like this to see if it fixes the bug
+(define (platform-predicate target-platform-id)
+  (let ((procedure
+	 (most-specific-generic-procedure
+	  (symbol target-platform-id '-predicate)
+	  1
+	  #f)))
+    
+    (define-generic-procedure-handler procedure
+      (match-args platform-id?)
+      (lambda (id) (platform-ids-equal? id target-platform-id)))
+    
+    (define-generic-procedure-handler procedure
+      (match-args message-accepting-procedure?)
+      (lambda (f) (platform-ids-equal? (f 'get-platform-id) target-platform-id)))
 
-(define-generic-procedure-handler platform-is?
-  (match-args platform-id? platform-id?)
-  (lambda (object platform) (eqv? platform object)))
+    (define-generic-procedure-handler procedure
+      (match-args identifier?)
+      (lambda (identifier) (platform-ids-equal? (identifier-platform identifier) target-platform-id)))
 
-(define-generic-procedure-handler platform-is?
-  (match-args message-accepting-procedure? platform-id?)
-  (lambda (procedure platform)
-    (platform-is? (procedure 'get-platform-id) platform)))
+    procedure))
 
-(define-generic-procedure-handler platform-is?
-  (match-args identifier? platform-id?)
-  (lambda (identifier platform)
-    (platform-is? (identifier-platform identifier) platform)))
-
-(define (platform-predicate target-platform)
-  (lambda (obj) (platform-is? obj target-platform)))
-
-(define ((platform-is? target-platform) symbol)
-  (and (symbol? symbol)
-       (eqv? symbol target-platform)))
+(define (platform-id-predicate target-platform)
+  (lambda (x) (and (platform-id? x) (eqv? target-platform x))))
 
 (define ((list-beginning-with? symbol) config)
   (and (list? config)

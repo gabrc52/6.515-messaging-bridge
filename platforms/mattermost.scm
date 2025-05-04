@@ -13,9 +13,9 @@
 (define make-mattermost-config
   (type-instantiator-with-defaults mattermost-config?
 				   '(platform-id mattermost)))
-  
+
 (define-generic-procedure-handler get-platform-config-constructor
-  (match-args (platform-predicate 'mattermost))
+  (match-args mattermost?)
   (lambda (platform) make-mattermost-config))
 
 ;;; Bridge constructor
@@ -28,4 +28,3 @@
 (define-generic-procedure-handler make-client!
   (match-args mattermost-config?)
   make-mattermost!)
-
