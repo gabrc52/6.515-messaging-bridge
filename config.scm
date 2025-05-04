@@ -50,13 +50,16 @@
 ;; Associative list of all clients (hash table would be overkill)
 (define *all-clients* '())
 
+;; TODO: it does not actually validate that the platforms you give under `bridge` actually exist below
 (define (load-config! config)
   (guarantee (list-beginning-with? 'config) config)
   ;; The first element of config must be the linked chats, then all the platform-specific options
   (let ((config-bridge (cadr config))
 	(config-platforms (cddr config)))
-    (load-linked-chats! (parse-bridge config-bridge))
-    (let ((clients (map make-client! config-platforms)))
+    (load-linked-chats! (parse-bridge config-bridge))    
+    ;; TODO: combine both let statements into one
+    (let* ((platform-options-list (map parse-platform config-platforms)) ;; actual parsed object
+	   (clients (map make-client! platform-options-list)))
       (set! *all-clients*
 	    (map (lambda (client) (cons (client-platform client) client)) clients)))))
 
