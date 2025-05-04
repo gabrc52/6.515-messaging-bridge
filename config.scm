@@ -37,14 +37,20 @@
 				   1
 				   #f))
 
+(define (env-fetch option)
+    (if (and (list? option) (eq? (car option) 'env))
+        (get-from-env (cadr option))
+        option))
+
 ;; Parse platform-specific options like
 ;;(discord
 ;; token "my token"
 ;; custom-status "I am a bot!")
 (define (parse-platform platform-options)
   (define (%parse-platform platform . plist)
-    (let ((constructor (get-platform-config-constructor platform)))
-      (apply constructor plist)))
+    (let ((constructor (get-platform-config-constructor platform))
+          (env-fetched (map env-fetch plist))) ; Parse (env "env-var")
+      (apply constructor env-fetched)))
   (apply %parse-platform platform-options))
 
 ;; Associative list of all clients (hash table would be overkill)
@@ -52,6 +58,7 @@
 
 ;; TODO: it does not actually validate that the platforms you give under `bridge` actually exist below
 (define (load-config! config)
+  (pp (list "Loading config" config))
   (guarantee (list-beginning-with? 'config) config)
   ;; The first element of config must be the linked chats, then all the platform-specific options
   (let ((config-bridge (cadr config))
