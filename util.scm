@@ -12,7 +12,7 @@
 (define platform-id? symbol?)
 (define platform-ids-equal? eqv?)
 
-;; Reimplementing platform-is? like this to see if it fixes the bug
+;; Makes a predicate to check if any object belongs to the given platform
 (define (platform-predicate target-platform-id)
   (let ((procedure
 	 (most-specific-generic-procedure
@@ -33,9 +33,6 @@
       (lambda (identifier) (platform-ids-equal? (identifier-platform identifier) target-platform-id)))
 
     procedure))
-
-(define (platform-id-predicate target-platform)
-  (lambda (x) (and (platform-id? x) (eqv? target-platform x))))
 
 (define ((list-beginning-with? symbol) config)
   (and (list? config)
