@@ -101,6 +101,12 @@
   (display (string "Not implemented. Would send message " message " to " chat " by " sender "..."))
   (newline))
 
+;; NOTE: because some of the event handlers are stateful, e.g. Discord has:
+;;  (let ((sequence-number (json-key event "s")))
+;;    (set! *heartbeat-number* sequence-number))
+;; At least some sort of event handler needs to be put in the client / message-accepting procedure
+;; since it does have access to local state.
+
 ;;; Low-level event handler
 (define handle-raw-event! (chaining-generic-procedure 'handle-raw-event! 2 #f)) ;; Takes platform ID and event
 

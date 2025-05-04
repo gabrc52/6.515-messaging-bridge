@@ -1,3 +1,5 @@
+;; TODO: implement and make it even compile lol
+
 ;;; Trying to get a clean implementation while also brainstorming the common interface
 
 (define *signal-socket* "/tmp/signal-socket")
@@ -10,14 +12,17 @@
 ;; There is no `self` because no OOP but we can name a lambda (message passing procedure) and just use its name and return it
 
 ;; We don't actually need ready? if we use threads,
-;; but it allows us to revert to the busy-waiting implementation if threads 
+;; but it allows us to revert to the busy-waiting implementation if threads
+
+;; I guess they are more like mixins/delegates/idk
+
 (define (make-stream-based-messaging-client stream ready? getter putter)
   )
 
 (define (make-port-based-messaging-client port)
   (make-stream-based-messaging-client port
 				      port-ready? ;; alias for char-ready?
-				      
+))				      
 
 ;; TODO: move common, non-signal stuff to something more general
 (define (make-signal)
