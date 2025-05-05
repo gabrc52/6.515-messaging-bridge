@@ -1,6 +1,7 @@
 ;; TODO: don't hardcode, maybe get from .env (after reading it first?)
 ;;  but when ready, we can bring all the files we need here
 (load "~/6.5151/sdf/manager/load")
+; (load "~/local/6.5150/sdf/manager/load")
 (manage 'new 'user-defined-types)
 
 ;; Configuration:
@@ -58,12 +59,14 @@
 (load-relative "types")
 (load-relative "bridge")
 (load-relative "config")
+(load-relative "queue")
 
 ;; Load each platform
 (load-relative "platforms/mattermost")
-
+(load-relative "platforms/dummy")
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file
-;;(load-config-file! "config.txt")
+(load-config-file! "config.txt")
+
 

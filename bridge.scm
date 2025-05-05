@@ -139,3 +139,12 @@
 ;; handle-raw-event HAS to be platform-specific
 ;; but what if we want platform-specific high-level logic?
 ;; Maybe have a third function then?
+
+(define start-client!
+    (most-specific-generic-procedure 'start-client! 1 #f))
+
+(define read-client!
+    (most-specific-generic-procedure 'read-client! 1 #f))
+
+(define write-client!
+    (most-specific-generic-procedure 'write-client 2 #f))
