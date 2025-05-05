@@ -1,12 +1,16 @@
-;; TODO: don't hardcode, maybe get from .env (after reading it first?)
-;;  but when ready, we can bring all the files we need here
-(load "~/6.5151/sdf/manager/load")
-; (load "~/local/6.5150/sdf/manager/load")
+;; TODO: don't hardcode. Get from .env (after reading it first?)
+;;   Alternatively, once we are finished, bring in the subset of SDF's code that we actually use.
+(load (if
+       (equal? (current-user-name) "rgabriel")
+       "~/6.5151/sdf/manager/load"
+       "~/local/6.5150/sdf/manager/load"))
 (manage 'new 'user-defined-types)
 
 ;; Configuration:
-; (define *project-home* "~/git/messaging-bridge")
-(define *project-home* "~/6.5151/project/messaging-bridge")
+(define *project-home* (if
+			(equal? (current-user-name) "rgabriel")
+		        "~/6.5151/project/messaging-bridge"
+		        "~/git/messaging-bridge"))
 
 ;; cd to the right place if running on emacs
 (when
@@ -28,6 +32,9 @@
 (load-option 'synchronous-subprocess)
 (load-option 'subprocess)
 (load-option 'format)
+
+;; Load from .env file
+(load-relative "env")
 
 ;;; JSON parser and serializer
 ;; Choose either of them
@@ -51,9 +58,6 @@
 ;; Uses websockets
 (load-relative "websockets")
 
-;; Load from .env file
-(load-relative "env")
-
 ;; These might change in their file structure, this for now:
 (load-relative "util") ;; misc utilities
 (load-relative "types")
@@ -61,12 +65,17 @@
 (load-relative "config")
 (load-relative "queue")
 
+;; Load platform pieces
+(load-relative "platforms/common/port")
+(load-relative "platforms/common/json-rpc")
+
 ;; Load each platform
 (load-relative "platforms/mattermost")
 (load-relative "platforms/dummy")
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file
+;; TODO: write a real config file / add the bot account / etc
 (load-config-file! "config.txt")
 
 
