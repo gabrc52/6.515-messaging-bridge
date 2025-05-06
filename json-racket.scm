@@ -52,6 +52,11 @@
 	(error (format #f "Key ~A not found on ~A" key dict))
 	(cdr (assoc key (cdr dict))))))
 
+(define (json-key-exists? dict key)
+  (assert (json-dict? dict))
+  (let ((pair (assoc key (cdr dict))))
+    (not (false? pair))))
+
 ;; I don't know if this will have a practical use but
 ;; (json-key j key1 key2 ... keyn) should be equivalent to j[key1][key2][...][keyn]
 (define (json-key expr . keys)
