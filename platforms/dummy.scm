@@ -112,8 +112,6 @@
 
 ;;; Generic predicate
 (define dummy? (platform-predicate 'dummy))
-; (define (dummy? lst)
-;     (equal? (car lst) 'dummy))
 
 ;;; Configuration
 (define dummy-config:interval
@@ -124,16 +122,10 @@
     (make-type 'dummy-config
         (list dummy-config:interval)))
 
+(register-config-constructor! 'dummy dummy-config?)
+
 (define get-dummy-interval
     (property-getter dummy-config:interval dummy-config?))
-
-(define make-dummy-config
-    (type-instantiator-with-defaults dummy-config?
-        '(platform-id dummy)))
-
-(define-generic-procedure-handler get-platform-config-constructor
-    (match-args dummy?)
-    (lambda (platform) make-dummy-config))
 
 ;;; Bridge constructor
 (define (make-dummy! config)

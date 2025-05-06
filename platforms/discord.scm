@@ -347,16 +347,10 @@
     (make-type 'discord-config
         (list discord-config:token)))
 
+(register-config-constructor! 'discord discord-config?)
+
 (define get-discord-token
     (property-getter discord-config:token discord-config?))
-
-(define make-discord-config
-    (type-instantiator-with-defaults discord-config?
-        '(platform-id discord)))
-
-(define-generic-procedure-handler get-platform-config-constructor
-    (match-args discord?)
-    (lambda (platform) make-discord-config))
 
 ;;; Bridge constructor
 (define (make-discord! config)

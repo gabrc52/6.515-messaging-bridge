@@ -1,7 +1,5 @@
 ;;; Generic predicate
 (define mattermost? (platform-predicate 'mattermost))
-; (define (mattermost? lst)
-;     (equal? (car lst) 'mattermost))
 
 ;;; Config format
 (define mattermost-config?
@@ -11,14 +9,7 @@
 		   ;; Would it be possible to implement type unions? (either access token or password is set)
 		   platform-config:access-token)))
 (set-predicate<=! mattermost-config? http-platform-config?)
-
-(define make-mattermost-config
-  (type-instantiator-with-defaults mattermost-config?
-				   '(platform-id mattermost)))
-
-(define-generic-procedure-handler get-platform-config-constructor
-  (match-args mattermost?)
-  (lambda (platform) make-mattermost-config))
+(register-config-constructor! 'mattermost mattermost-config?)
 
 ;;; Bridge constructor
 (define (make-mattermost! config)

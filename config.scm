@@ -31,11 +31,16 @@
   (guarantee (list-beginning-with? 'bridge) linked-chats-list)
   (map parse-linked-chats (cdr linked-chats-list)))
 
+(define *config-constructors* (make-weak-eqv-hash-table))
+(define (register-config-constructor! platform config-predicate #!optional defaults)
+  (let ((defaults (if (default-object? defaults) '() defaults)))
+    (let ((constructor
+	   (type-instantiator-with-defaults config-predicate
+					    `(platform-id ,platform ,@defaults))))
+      (hash-table-set! *config-constructors* platform constructor))))
 ;; Parse the options specific to a platform
-(define get-platform-config-constructor
-  (most-specific-generic-procedure 'get-platform-config-constructor
-				   1
-				   #f))
+(define (get-platform-config-constructor platform)
+  (hash-table-ref *config-constructors* platform))
 
 (define (env-fetch option)
     (if (and (list? option) (eq? (car option) 'env))
@@ -58,18 +63,15 @@
 
 ;; TODO: it does not actually validate that the platforms you give under `bridge` actually exist below
 (define (load-config! config)
-  (pp (list "Loading config" config))
   (guarantee (list-beginning-with? 'config) config)
   ;; The first element of config must be the linked chats, then all the platform-specific options
-  (let ((config-bridge (cadr config))
-	(config-platforms (cddr config)))
-    (load-linked-chats! (parse-bridge config-bridge))    
-    ;; TODO: combine both let statements into one
-    (let* ((platform-options-list (map parse-platform config-platforms)) ;; actual parsed object
-	   (clients (map make-client! platform-options-list)))
-      (set! *all-clients*
-	    (map (lambda (client) (cons (client-platform client) client)) clients)))))
+  (let* ((config-bridge (cadr config))
+	 (config-platforms (cddr config))
+	 (platform-options-list (map parse-platform config-platforms))
+	 (clients (map make-client! platform-options-list)))
+    (load-linked-chats! (parse-bridge config-bridge))
+    (set! *all-clients*
+	  (map (lambda (client) (cons (client-platform client) client)) clients))))
 
 (define (load-config-file! file)
   (load-config! (read-sexp-from-file file)))
-  
