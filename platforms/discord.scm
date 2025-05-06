@@ -2,12 +2,9 @@
 ;; As for sending messages and performing actions, it is a HTTPS API
 
 ;;;; Define constants and functions
-(load "load.scm")
+; (load "../load.scm")
 
 (begin ;; Wrapped in begin to allow pressing Alt+Enter below and defining them all in the REPL at once
-
-  ;; TODO: don't hardcode this, use a config file. Invalidate this token before releasing repo publicly
-;   (define *discord-token* "OTAxMjUxMDU1MjczMjcxMzE3.GEjI7x.hScW3U9Y7qF7QeOekRwpUdEPwzzDt8smW8YjS4")
   (define *discord-token* (get-from-env "discord-token"))
 
   ;; From https://github.com/simmsb/racket-cord/blob/master/private/gateway.rkt
