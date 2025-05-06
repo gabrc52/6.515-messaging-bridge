@@ -60,3 +60,7 @@
 ;;; Reverse Chaining Generic Procedures
 ;; TODO: implement if needed
 
+(define (get-time-ms)
+    (let ((ticks (real-time-clock)))
+        (internal-time/ticks->seconds ticks)))
+

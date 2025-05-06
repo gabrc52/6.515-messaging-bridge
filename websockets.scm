@@ -92,6 +92,14 @@
 (define (websocket-next-json websocket)
   (port-next-json (websocket-port websocket)))
 
+;; Blocking json from port
+(define (port-next-json-blocking port)
+  (string->jsexpr (read-line port)))
+
+(define (websocket-next-json-blocking websocket)
+  (port-next-json-blocking (websocket-port websocket)))
+
+
 ;; TODO: should the get/send be curried? it's very easy to get a getter/sender function instead
 (define (port-send-line port string)
   (display string port)

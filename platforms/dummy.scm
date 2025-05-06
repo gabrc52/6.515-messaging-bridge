@@ -1,4 +1,52 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Dummy Internals  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; tx/rx is from the perspective of the dummy to the bridge
+
+(define-record-type dummy-i
+    (dummy-i:make-record tx-queue rx-queue interval)
+    dummy-i?
+  (tx-queue dummy-i:tx-queue)
+  (rx-queue dummy-i:rx-queue)
+  (interval dummy-i:interval))
+
+(define (dummy-i:make interval) ;; common
+    (dummy-i:make-record (queue:make) (queue:make) interval))
+
+(define (dummy-i:read! dummy-i) ;; commonw
+    (if (queue:empty? (dummy-i:tx-queue dummy-i))
+        '()
+        (queue:get-first! (dummy-i:tx-queue dummy-i))))
+
+(define (dummy-i:write! dummy-i obj)
+    (pp (cons "dummy-i received" obj)))
+
+(define *dummy-count* 0)
+(define (get-dummy-count)
+    (set! *dummy-count* (+ *dummy-count* 1))
+    *dummy-count*)
+
+(define (dummy-i:tx-fetch-value dummy-i last-ts)
+    (if (> (- (get-universal-time) last-ts) (dummy-i:interval dummy-i))
+        (cons (make-dummy-chat-event "dummy-i" (make-identifier 'dummy "test") (list "dummy test message #" (get-dummy-count))) (get-universal-time))
+        (cons '() last-ts)))
+
+(define (dummy-i:tx-loop dummy-i ts)
+    (let ((tx-value (dummy-i:tx-fetch-value dummy-i ts))
+          (tx-queue (dummy-i:tx-queue dummy-i)))
+        (unless (equal? (car tx-value) '())
+            (queue:add-to-end! tx-queue (car tx-value)))
+
+        (dummy-i:tx-loop dummy-i (cdr tx-value))))
+
+(define (dummy-i:start! dummy-i) ;; common
+  (create-thread
+   #f
+   (lambda ()
+     (dummy-i:tx-loop dummy-i 0))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Message Handling ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -8,8 +56,8 @@
   (sender dummy-chat-event:sender)
   (chat dummy-chat-event:chat)
   (platform dummy-chat-event:platform)
-  (body dummy-chat-event: body)
-  (timestamp dummy-chat-event: timestamp))
+  (body dummy-chat-event:body)
+  (timestamp dummy-chat-event:timestamp))
 
 (define (make-dummy-chat-event sender chat content)
     (let ((event (make-event 'dummy '())))
@@ -37,6 +85,7 @@
     (lambda (event)
         (dummy-chat-event:body event)))
 
+;;; Generic predicates:
 
 ;;; Chat event: any event coming from a chat
 (define-generic-procedure-handler chat-event?
@@ -58,61 +107,13 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
-;;; Dummy Internals  ;;;
-;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; tx/rx is from the perspective of the dummy to the bridge
-
-(define-record-type dummy-i
-    (dummy-i:make-record tx-queue rx-queue interval)
-    dummy-i?
-  (tx-queue dummy-i:tx-queue)
-  (rx-queue dummy-i:rx-queue)
-  (interval dummy-i:interval))
-
-(define (dummy-i:make interval)
-    (dummy-i:make-record (queue:make) (queue:make) interval))
-
-(define (dummy-i:read! dummy-i)
-    (if (queue:empty? (dummy-i:tx-queue dummy-i))
-        '()
-        (queue:get-first! (dummy-i:tx-queue dummy-i))))
-
-(define (dummy-i:write! dummy-i obj)
-    (pp (cons "dummy-i received" obj)))
-
-(define *dummy-count* 0)
-(define (get-dummy-count)
-    (set! *dummy-count* (+ *dummy-count* 1))
-    *dummy-count*)
-
-(define (dummy-i:tx-fetch-value dummy-i last-ts)
-    (if (> (- (get-universal-time) last-ts) (dummy-i:interval dummy-i))
-        (cons (make-dummy-chat-event "dummy-i" (make-identifier 'dummy "test") (list "dummy test message #" (get-dummy-count))) (get-universal-time))
-        (cons '() last-ts)))
-
-(define (dummy-i:tx-loop dummy-i ts)
-    (let ((tx-value (dummy-i:tx-fetch-value dummy-i ts))
-          (tx-queue (dummy-i:tx-queue dummy-i)))
-        (unless (equal? (car tx-value) '())
-            (queue:add-to-end! tx-queue (car tx-value)))
-
-        (dummy-i:tx-loop dummy-i (cdr tx-value))))
-
-(define (dummy-i:start! dummy-i)
-  (create-thread
-   #f
-   (lambda ()
-     (dummy-i:tx-loop dummy-i 0))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Bridge interface ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Generic predicate
 (define dummy? (platform-predicate 'dummy))
 
-;;; Config format
+;;; Configuration
 (define dummy-config:interval
   (make-property 'interval
 		 'predicate number?))
@@ -143,10 +144,12 @@
             ((get-interface) dummy-interface)
             (else (error "not implemented"))))))
     
-
 (define-generic-procedure-handler make-client!
     (match-args dummy-config?)
     make-dummy!)
+
+
+;;; Interface Operations
 
 ;;; Hack to coerce first argument into the interface
 (define (wrap-interface fn)
