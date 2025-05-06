@@ -79,7 +79,9 @@
   (most-specific-generic-procedure 'in-direct-message? 1 #f))
 (register-predicate! in-direct-message? 'in-direct-message)
 
-;;; Getters for events (or messages)
+;;; Getters for chat events
+(define generic-event-platform
+  (most-specific-generic-procedure 'event-chat 1 #f))
 
 (define event-chat ;; mapping from <event> to a chat identifier
   (most-specific-generic-procedure 'event-chat 1 #f))
@@ -95,11 +97,12 @@
 ;;; Message receiving and sending
 
 ;; Sending messages
-(define (send-message! chat message #!optional sender)
+(define (send-message! message chat #!optional sender)
   ;; TODO: implement, most likely implementation is to find the client and then pass a message
   ;;   Alternatively, it could be a generic procedure.
-  (display (string "Not implemented. Would send message " message " to " chat " by " sender "..."))
-  (newline))
+  (let ((client (cdr (assoc (generic-event-platform message) *all-clients*))))
+    (write-client! client message)))
+  
 
 ;; NOTE: because some of the event handlers are stateful, e.g. Discord has:
 ;;  (let ((sequence-number (json-key event "s")))
@@ -111,7 +114,8 @@
 (define handle-raw-event! (chaining-generic-procedure 'handle-raw-event! 2 #f)) ;; Takes platform ID and event
 
 ;;; High-level event handler
-(define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
+; (define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
+(define handle-event! (most-specific-generic-procedure 'handle-event! 1 #f))
 
 ;; TODO: it is likely that we need to implement a very similar type of chaining generic procedure
 ;;   BUT in the other direction (from supertype to subtype rather than the opposite)
@@ -119,20 +123,20 @@
 
 (define-generic-procedure-handler handle-event!
   (match-args chat-event?)
-  (lambda (super event)
-    (super event)
+;   (lambda (super event)
+;     (super event)
+  (lambda (event)
     (unless (bridged-event? event) ;; Crucial to avoid infinite loops
       ;; TODO: we can avoid this condition by doing the above, calling the subtype's handler here,
       ;;   and defining a handler for message-event?
       (when (message-event? event)
-	(let ((platform (event-platform event)) ;; Not sure if we need this (TODO: remove if unused)
-	      (chat (event-chat event))
-	      (sender (event-sender event)))
-	  (let ((equivalent-chats (linked-chats-get chat)))
-	    (for-each (lambda (other-chat)
-			;; It is a different platform, but generics should take care of it :D
-			(send-message! other-chat message sender))
-		      equivalent-chats)))))))
+        (let ((chat (event-chat event))
+            (sender (event-sender event)))
+        (let ((equivalent-chats (linked-chats-get chat)))
+            (for-each (lambda (other-chat)
+                ;; It is a different platform, but generics should take care of it :D
+                (send-message! event other-chat sender))
+                equivalent-chats)))))))
 
 ;; TODO: is one platform-agnostic and one platform-specific?
 ;; I think it has to be either one or the other so that `super` is defined and makes sense

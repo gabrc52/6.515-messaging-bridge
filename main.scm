@@ -9,7 +9,8 @@
 (define (read-clients!)
     (for-each
         (lambda (client)
-            (read-client! (cdr client)))
+            (let ((in (read-client! (cdr client))))
+                (unless (equal? in '()) (handle-event! in))))
         *all-clients*))
 
 (define (loop)

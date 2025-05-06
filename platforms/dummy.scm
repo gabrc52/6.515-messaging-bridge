@@ -1,6 +1,67 @@
-; (load "queue.scm")
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Message Handling ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
-; tx/rx is from the perspective of the dummy to the bridge
+(define-record-type <dummy-chat-event>
+  (%dummy-chat-event:make sender chat platform body timestamp)
+  dummy-chat-event?
+  (sender dummy-chat-event:sender)
+  (chat dummy-chat-event:chat)
+  (platform dummy-chat-event:platform)
+  (body dummy-chat-event: body)
+  (timestamp dummy-chat-event: timestamp))
+
+(define (make-dummy-chat-event sender chat content)
+    (let ((event (make-event 'dummy '())))
+        (%dummy-chat-event:make sender chat (event-platform event) content (event-timestamp event))))
+        ;; TODO: actually subtype event
+
+;; Generic getters:
+(define-generic-procedure-handler generic-event-platform
+    (match-args dummy-chat-event?)
+    (lambda (event)
+        (dummy-chat-event:platform event)))
+
+(define-generic-procedure-handler event-chat
+    (match-args dummy-chat-event?)
+    (lambda (event)
+        (dummy-chat-event:chat event)))
+
+(define-generic-procedure-handler event-sender
+    (match-args dummy-chat-event?)
+    (lambda (event)
+        (dummy-chat-event:sender event)))
+
+(define-generic-procedure-handler message-content
+    (match-args dummy-chat-event?)
+    (lambda (event)
+        (dummy-chat-event:body event)))
+
+
+;;; Chat event: any event coming from a chat
+(define-generic-procedure-handler chat-event?
+    (match-args dummy-chat-event?) ;; Needs to be dummy-specific
+    (lambda (event) #t))
+
+;;; Bridged event: chat event coming from the bridge 
+(define (dummy-bridged-event? event)
+    (dummy-chat-event:sender event))
+
+(define-generic-procedure-handler bridged-event?
+    (match-args dummy-chat-event?)
+    (lambda (event) #f)) ; TODO: link up with chat stuff
+
+;;; Message event: chat event with a message payload
+(define-generic-procedure-handler message-event?
+    (match-args dummy-chat-event?)
+    (lambda (event) #t))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Dummy Internals  ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; tx/rx is from the perspective of the dummy to the bridge
 
 (define-record-type dummy-i
     (dummy-i:make-record tx-queue rx-queue interval)
@@ -15,23 +76,26 @@
 (define (dummy-i:read! dummy-i)
     (if (queue:empty? (dummy-i:tx-queue dummy-i))
         '()
-        (pp (list "Received from Queue:" (queue:get-first! (dummy-i:tx-queue dummy-i))))))
+        (queue:get-first! (dummy-i:tx-queue dummy-i))))
 
 (define (dummy-i:write! dummy-i obj)
     (pp (cons "dummy-i received" obj)))
 
+(define *dummy-count* 0)
+(define (get-dummy-count)
+    (set! *dummy-count* (+ *dummy-count* 1))
+    *dummy-count*)
 
 (define (dummy-i:tx-fetch-value dummy-i last-ts)
     (if (> (- (get-universal-time) last-ts) (dummy-i:interval dummy-i))
-        (cons "dummy-i Sent Msg" (get-universal-time))
+        (cons (make-dummy-chat-event "dummy-i" (make-identifier 'dummy "test") (list "dummy test message #" (get-dummy-count))) (get-universal-time))
         (cons '() last-ts)))
 
 (define (dummy-i:tx-loop dummy-i ts)
     (let ((tx-value (dummy-i:tx-fetch-value dummy-i ts))
           (tx-queue (dummy-i:tx-queue dummy-i)))
-        (if (equal? (car tx-value) '())
-            '()
-            (queue:add-to-end! tx-queue tx-value))
+        (unless (equal? (car tx-value) '())
+            (queue:add-to-end! tx-queue (car tx-value)))
 
         (dummy-i:tx-loop dummy-i (cdr tx-value))))
 
@@ -41,17 +105,9 @@
    (lambda ()
      (dummy-i:tx-loop dummy-i 0))))
 
-; Testing
-; (define the-dummy (dummy:make))
-
-; (dummy:start the-dummy)
-
-; Main loop
-; (define (loop)
-;     (let ((out (dummy:read the-dummy)))
-;     (loop)))
-
-; (loop)
+;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Bridge interface ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Generic predicate
 (define dummy? (platform-predicate 'dummy))
@@ -106,5 +162,9 @@
     (wrap-interface dummy-i:read!))
 
 (define-generic-procedure-handler write-client!
-    (match-args dummy? event?)
+    (match-args dummy? dummy-chat-event?) ; TODO: rethink this
     (wrap-interface dummy-i:write!))
+
+; (define clt (cdr (assoc 'dummy *all-clients*)))
+; (define evt (make-dummy-chat-event "dummy-i" (make-identifier 'dummy "test") (list "dummy test message #" (get-dummy-count))))
+; (write-client! clt evt)
