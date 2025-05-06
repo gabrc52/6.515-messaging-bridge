@@ -67,11 +67,12 @@
 
 ;; Load platform pieces
 (load-relative "platforms/common/port")
-(load-relative "platforms/common/json-rpc")
+; (load-relative "platforms/common/json-rpc")
 
 ;; Load each platform
 (load-relative "platforms/mattermost")
 (load-relative "platforms/dummy")
+(load-relative "platforms/discord")
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file

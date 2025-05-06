@@ -103,9 +103,9 @@
 
 (define *heartbeat-number* null)
 
-(define (discord-send-and-wait fn-with-args discord) ;; TODO: generalize w/ combinator
-    ,fn-with-args
-    (discord-handle-event discord))
+; (define (discord-send-and-wait fn-with-args discord) ;; TODO: generalize w/ combinator
+;     ,fn-with-args
+;     (discord-handle-event discord))
 
 (define (discord-send-heartbeat! discord)
     (websocket-send-json discord (make-heartbeat *heartbeat-number*)))
@@ -117,12 +117,12 @@
 
 (define (discord-keepalive-loop discord ts)
     (when (websocket-connected? discord)
-        (let ((fetched (discord-keepalive-fetch discord ts))
+        (let ((fetched (discord-keepalive-fetch discord ts)))
             (let ((ready (car fetched))
                 (next-ts (cdr fetched)))
                 (when (ready)
                     (discord-send-heartbeat! discord))
-                (discord-keepalive-loop discord next-ts))))))
+                (discord-keepalive-loop discord next-ts)))))
 
 (define (discord-start-keepalive-loop discord)
     (create-thread
@@ -203,25 +203,16 @@
                     (display (format #false "~A says \"~A\"!" name message))))
             (else (display (string "Unimplemented dispatch event type " type))))))
 
+;; Returns: (result, socket)
 (define (discord-handle-event discord)
     (if (websocket-connected? discord)
         (let ((json (websocket-next-json-blocking discord)))
             (if json
-                (discord-handle-json-event json)))
-        ;; TODO: reconnect with *resume-gateway-url* and *session-id*. See Gateway docs
-        ;; Alternatively, just starting the whole connection again probably works too (but it might
-        ;;   lead to some missed messages).
-        ;; My thought is we should either
-        ;;    (1) really make sure to reply to heartbeats immediately
-        ;;       (deal with time!) (because otherwise we might be handling some other event from some other
-        ;;                          messaging service and by the time we handle this one, it will be too late)
-        ;;    (2) make sure to reconnect using the Discord-provided instructions
-        ;; (1) sounds like more effort, so I would go with (2) is just implementing what Discord asks you to,
-        ;;  and it is more robust because the docs imply that Discord may drop the connection through
-        ;;  no fault of our own
+                (cons (discord-handle-json-event json) discord)
+                (cons json discord)))
         (begin
-            (display "The connection to discord got dropped! Reconnecting...!")
-            (discord-setup (get-from-env "discord-token"))))) ;; TODO: use configured token
+            (display "The connection to discord got dropped! Reconnecting...!") ;; TODO: make sure to stay under 1000 quota
+            (cons '() (discord-setup (get-from-env "discord-token")))))) ;; TODO: use configured token
 
 
 
@@ -308,19 +299,45 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Queue Interface  ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
-(define-record-type dummy-i
-    (dummy-i:make-record tx-queue rx-queue interval)
-    dummy-i?
-  (tx-queue dummy-i:tx-queue)
-  (rx-queue dummy-i:rx-queue)
-  (interval dummy-i:interval)) ;; TODO: somehow link the queue stuff to messaging/inner logic or make it a bridge like manta
+(define-record-type discord-i
+    (discord-i:make-record tx-queue rx-queue token)
+    discord-i?
+  (tx-queue discord-i:tx-queue)
+  (rx-queue discord-i:rx-queue)
+  (token discord-i:token)) ;; TODO: somehow link the queue stuff to messaging/inner logic or make it a bridge like manta
 
+(define (discord-i:loop discord-i)
+    (let ((discord-socket (discord-setup (discord-i:token discord-i)))
+          (tx-queue (discord-i:tx-queue discord-i)))
+        (define (discord-i:loop discord-inner-socket)
+            (let ((next (discord-handle-event discord-socket)))
+                (let ((next-json (car next))
+                      (next-socket (cdr next)))
+                      (unless (equal? next-json '())
+                        (queue:add-to-end! tx-queue next-json)))
+                        (discord-i:loop next-socket)))))
+
+(define (discord-i:start! discord-i)
+    (create-thread
+        #f
+        (lambda ()
+            (discord-i:loop discord-i))))
+
+(define (discord-i:read! discord-i)
+    (if (queue:empty? (discord-i:tx-queue discord-i))
+        '()
+        (queue:get-first! (discord-i:tx-queue discord-i))))
+
+(define (discord-i:write! discord-i event)
+    (pp (list "Discord writing" event)))
 ;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Bridge interface ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;;; Generic predicate
 (define discord? (platform-predicate 'discord))
+; (define (discord? lst)
+;     (equal? (car lst) 'discord))
 
 ;;; Configuration
 (define discord-config:token
@@ -344,7 +361,7 @@
 ;;; Bridge constructor
 (define (make-discord! config)
     (write-line (list "A discord client has been created with config:" config))
-    (let ((discord-interface (discord-i:make (get-discord-interval config))))
+    (let ((discord-interface (discord-i:make (get-discord-token config))))
         (lambda (message)
         (case message
             ((get-platform-id) 'discord)

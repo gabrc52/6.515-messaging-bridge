@@ -1,5 +1,7 @@
 (config
    (bridge
-    (linked (dummy "test") (dummy "test2")))
+    (linked (dummy "test") (dummy "test2") (discord "1365742631036125256")))
    (dummy
-    interval 5))
+    interval 5)
+   (discord
+    bot-token (env "discord-token")))

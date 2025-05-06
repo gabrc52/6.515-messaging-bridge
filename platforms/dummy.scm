@@ -14,7 +14,7 @@
 (define (dummy-i:make interval) ;; common
     (dummy-i:make-record (queue:make) (queue:make) interval))
 
-(define (dummy-i:read! dummy-i) ;; commonw
+(define (dummy-i:read! dummy-i) ;; common
     (if (queue:empty? (dummy-i:tx-queue dummy-i))
         '()
         (queue:get-first! (dummy-i:tx-queue dummy-i))))
@@ -112,6 +112,8 @@
 
 ;;; Generic predicate
 (define dummy? (platform-predicate 'dummy))
+; (define (dummy? lst)
+;     (equal? (car lst) 'dummy))
 
 ;;; Configuration
 (define dummy-config:interval

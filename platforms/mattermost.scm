@@ -1,5 +1,7 @@
 ;;; Generic predicate
 (define mattermost? (platform-predicate 'mattermost))
+; (define (mattermost? lst)
+;     (equal? (car lst) 'mattermost))
 
 ;;; Config format
 (define mattermost-config?
