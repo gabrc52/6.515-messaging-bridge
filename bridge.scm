@@ -79,9 +79,12 @@
   (most-specific-generic-procedure 'in-direct-message? 1 #f))
 (register-predicate! in-direct-message? 'in-direct-message)
 
-;;; Getters for chat events
+;; Hack to use instead of event-platform since some events (like discord) currently use their own record type
+;;   instead of just the event type.
 (define generic-event-platform
-  (most-specific-generic-procedure 'event-chat 1 #f))
+  (most-specific-generic-procedure 'event-chat 1 event-platform))
+
+;;; Getters for chat events
 
 (define event-chat ;; mapping from <event> to a chat identifier
   (most-specific-generic-procedure 'event-chat 1 #f))
