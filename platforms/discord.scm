@@ -111,7 +111,7 @@
     (websocket-send-json discord (make-heartbeat *heartbeat-number*)))
 
 (define (discord-keepalive-fetch discord last-ts) ;; TODO: generalize
-    (if (> (- (get-time-ms) last-ts) (*heartbeat_interval*))
+    (if (> (- (get-time-ms) last-ts) *heartbeat-interval*)
         (cons (#t get-time-ms))
         (cons (#f last-ts))))
 
@@ -120,15 +120,18 @@
         (let ((fetched (discord-keepalive-fetch discord ts)))
             (let ((ready (car fetched))
                 (next-ts (cdr fetched)))
-                (when (ready)
-                    (discord-send-heartbeat! discord))
+                (when ready
+                    (begin
+                        (pp "[discord-keepalive-loop] Sending heartbeat!")
+                        (discord-send-heartbeat! discord)))
                 (discord-keepalive-loop discord next-ts)))))
 
 (define (discord-start-keepalive-loop discord)
     (create-thread
-    #f
-    (lambda ()
-        (discord-keepalive-loop discord 0))))
+        #f
+        (lambda ()
+            (discord-keepalive-loop discord 0))
+        "Discord Keepalive Loop"))
 
 ;; NOTE: "Clients are limited to 1000 IDENTIFY calls to the websocket in a 24-hour period"
 (define (discord-identify! discord token)
@@ -164,29 +167,39 @@
 ;; * We have logic for all base events (keep track of sequence number)
 ;; * And we have some logic for specific type events
 ;; * And we have predicates that are subsets of other predicates (e.g. all the "dispatch" events)
-(define (discord-handle-json-event event)
+(define (discord-handle-json-event discord event)
     ;; Print (for debugging rn)
-    (pp event)
+    ; (pp event)
     ;; Get sequence number and set global variable
     (let ((sequence-number (json-key event "s")))
         (set! *heartbeat-number* sequence-number))
         ;; Handle per type of event
         (cond ;; "Discord may send the app a Heartbeat (opcode 1) event,
             ;; in which case the app should send a Heartbeat event IMMEDIATELY [emphasis added]".
-            ((event-heartbeat? event) (discord-send-heartbeat! discord))
+            ((event-heartbeat? event) 
+                (begin
+                    (pp "[discord-handle-json-event] Sending heartbeat!")
+                    (discord-send-heartbeat! discord)
+                    '())) ;; Return '()
             ;; TODO: "If an app doesn't receive a Heartbeat ACK [in response to a heartbeat],
             ;;        it should close the connection and reconnect."
-            ((event-heartbeat-ack? event) (begin))
-            ((event-dispatch? event) (discord-handle-dispatch-event event))
+            ((event-heartbeat-ack? event) 
+                (begin
+                    '())) ;; Return '()
+            ((event-dispatch? event) (discord-handle-dispatch-event discord event))
             ((event-hello? event)
                 (begin
                     (set! *heartbeat-interval* (json-key event "d" "heartbeat_interval"))
-                    (display "Discord says hello")))
-                        (else (display "Unknown event type"))))
+                    (display "Discord says hello"))
+                    '()) ;; Return '()
+            (else 
+                (begin
+                    (display "Unknown event type")
+                    '())))) ;; Return '()
 
 ;; "Dispatch" (word from Discord docs) events are messages and most user-facing features, rather
 ;; than events only for implementation details. (opcode 0)
-(define (discord-handle-dispatch-event event)
+(define (discord-handle-dispatch-event discord event)
     (assert (event-dispatch? event))
     (let ((type (string->symbol (string-downcase (json-key event "t"))))
           (content (json-key event "d")))
@@ -195,21 +208,32 @@
                 (begin
                     (display (string "Logged in as " (json-key content "user" "username")))
                     (set! *session-id* (json-key content "session_id"))
-                    (set! *resume-gateway-url* (json-key content "resume_gateway_url"))))
-            ((guild_create) (display (string "We are in the server " (json-key content "name"))))
+                    (set! *resume-gateway-url* (json-key content "resume_gateway_url"))
+                    (display (string "Session Id " (json-key content "session_id")))
+                    '())) ;; Return ()
+            ((guild_create) 
+                (begin
+                    (display (string "We are in the server " (json-key content "name")))
+                    '())) ;; Return ()
             ((message_create)
-                (let ((name (json-key content "author" "global_name"))
-                      (message (json-key content "content")))
-                    (display (format #false "~A says \"~A\"!" name message))))
-            (else (display (string "Unimplemented dispatch event type " type))))))
+                (let ((user-name (json-key content "author" "global_name"))
+                      (user-id (json-key content "author" "id"))
+                      (content (json-key content "content"))
+                      (chat-id (json-key content "channel_id")))
+                    (display (format #false "~A says \"~A\"!" user-name content))
+                    (make-discord-chat-event (%user:make user-id user-name) chat-id content)))
+            (else 
+                (begin
+                    (display (string "Unimplemented dispatch event type " type))
+                    '()))))) ;; Return ()
 
 ;; Returns: (result, socket)
-(define (discord-handle-event discord)
-    (if (websocket-connected? discord)
-        (let ((json (websocket-next-json-blocking discord)))
+(define (discord-handle-event discord-socket)
+    (if (websocket-connected? discord-socket)
+        (let ((json (websocket-next-json-blocking discord-socket)))
             (if json
-                (cons (discord-handle-json-event json) discord)
-                (cons json discord)))
+                (cons (discord-handle-json-event discord-socket json) discord-socket)
+                (cons '() discord-socket)))
         (begin
             (display "The connection to discord got dropped! Reconnecting...!") ;; TODO: make sure to stay under 1000 quota
             (cons '() (discord-setup (get-from-env "discord-token")))))) ;; TODO: use configured token
@@ -225,7 +249,9 @@
          (discord-handle-event discord-socket)    ;; Receive heartbeat
          (discord-identify! discord-socket token) ;; Identify the bot
          (discord-handle-event discord-socket)
-         (discord-start-keepalive-loop discord)   ;; Automatically heartbeat
+         (pp "[discord-setup] Starting heartbeat loop")
+         (discord-start-keepalive-loop discord-socket)   ;; Automatically heartbeat
+         (pp "[discord-setup] Heartbeat loop started")
          discord-socket))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;
@@ -306,24 +332,33 @@
   (rx-queue discord-i:rx-queue)
   (token discord-i:token)) ;; TODO: somehow link the queue stuff to messaging/inner logic or make it a bridge like manta
 
+(define (discord-i:make token)
+    (discord-i:make-record (queue:make) (queue:make) token))
+
 (define (discord-i:loop discord-i)
     (let ((discord-socket (discord-setup (discord-i:token discord-i)))
           (tx-queue (discord-i:tx-queue discord-i)))
         (define (discord-i:loop discord-inner-socket)
-            (let ((next (discord-handle-event discord-socket)))
+            (let ((next (discord-handle-event discord-inner-socket)))
+                (pp (list "[discord-i:loop] Discord Received:" next))
                 (let ((next-json (car next))
                       (next-socket (cdr next)))
                       (unless (equal? next-json '())
-                        (queue:add-to-end! tx-queue next-json)))
-                        (discord-i:loop next-socket)))))
+                        (queue:add-to-end! tx-queue next-json))
+                      (discord-i:loop next-socket)))) ;; Loop
+        (pp (list "[discord-i:loop] Starting discord loop"))
+        (discord-i:loop discord-socket))) ;; Start loop
 
 (define (discord-i:start! discord-i)
+    (pp "Starting discord")
     (create-thread
         #f
         (lambda ()
-            (discord-i:loop discord-i))))
+            (discord-i:loop discord-i))
+        "Discord Loop"))
 
 (define (discord-i:read! discord-i)
+    ;  (pp "Reading discord")
     (if (queue:empty? (discord-i:tx-queue discord-i))
         '()
         (queue:get-first! (discord-i:tx-queue discord-i))))
@@ -379,7 +414,7 @@
     (match-args discord?)
     (wrap-interface discord-i:start!))
 
-(define-generic-procedure-handler read-client!
+(define-generic-procedure-handler read-client! ;; TODO: filter such that only events from bridged chats are sent out (not all that bot is linked to)
     (match-args discord?)
     (wrap-interface discord-i:read!))
 

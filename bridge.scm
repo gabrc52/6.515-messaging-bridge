@@ -126,6 +126,7 @@
 ;   (lambda (super event)
 ;     (super event)
   (lambda (event)
+    (pp (list "Got event" event))
     (unless (bridged-event? event) ;; Crucial to avoid infinite loops
       ;; TODO: we can avoid this condition by doing the above, calling the subtype's handler here,
       ;;   and defining a handler for message-event?
