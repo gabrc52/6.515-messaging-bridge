@@ -14,14 +14,12 @@
 
 ;; Makes a predicate to check if any object belongs to the given platform
 (define (platform-predicate target-platform-id)
-  ;; Formerly a generic procedure, but something was not working right (wrong predicate dispatched for generics)
-  ;; And generic procedure was just more code/didn't make sense for something so simple that does not need
-  ;;   flexiblity.
-  (lambda obj
+  ;; And generic procedure was more code/didn't make sense for something so simple that doesn't need flexiblity.
+  (lambda (obj)
     (platform-ids-equal? target-platform-id
 			 ;; I guess this reveals that getting the platform *could* be a generic procedure
 			 (cond ((platform-id? obj) obj)
-			       ((message-accepting-procedure? obj))
+			       ((message-accepting-procedure? obj) (obj 'get-platform-id))
 			       ((identifier? obj) (identifier-platform obj))
 			       ((event? obj) (event-platform obj))))))
 
