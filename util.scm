@@ -14,29 +14,16 @@
 
 ;; Makes a predicate to check if any object belongs to the given platform
 (define (platform-predicate target-platform-id)
-  (let ((procedure
-	 (most-specific-generic-procedure
-	  (symbol target-platform-id '-predicate)
-	  1
-	  #f)))
-    
-    (define-generic-procedure-handler procedure
-      (match-args platform-id?)
-      (lambda (id) (platform-ids-equal? id target-platform-id)))
-    
-    (define-generic-procedure-handler procedure
-      (match-args message-accepting-procedure?)
-      (lambda (f) (platform-ids-equal? (f 'get-platform-id) target-platform-id)))
-
-    (define-generic-procedure-handler procedure
-      (match-args identifier?)
-      (lambda (identifier) (platform-ids-equal? (identifier-platform identifier) target-platform-id)))
-
-    (define-generic-procedure-handler procedure
-      (match-args event?)
-      (lambda (event) (platform-ids-equal? (event-platform event) target-platform-id)))
-    
-    procedure))
+  ;; Formerly a generic procedure, but something was not working right (wrong predicate dispatched for generics)
+  ;; And generic procedure was just more code/didn't make sense for something so simple that does not need
+  ;;   flexiblity.
+  (lambda obj
+    (platform-ids-equal? target-platform-id
+			 ;; I guess this reveals that getting the platform *could* be a generic procedure
+			 (cond ((platform-id? obj) obj)
+			       ((message-accepting-procedure? obj))
+			       ((identifier? obj) (identifier-platform obj))
+			       ((event? obj) (event-platform obj))))))
 
 (define ((list-beginning-with? symbol) config)
   (and (list? config)
