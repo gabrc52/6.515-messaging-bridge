@@ -1,0 +1,5 @@
+(config
+   (bridge
+    (linked (dummy "test") (dummy "test2")))
+   (dummy
+    interval 5))
