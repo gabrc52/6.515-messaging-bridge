@@ -106,12 +106,27 @@
 
 ;;; Message receiving and sending
 
+(define *message-format* "[~A] ~A") ;; TODO(stretch): this can go in the config file
+(define (format-bridged-message message)
+  ;; HERE is where generics do shine. Reading the properties does not require constructing an instance
+  ;;   of a record type or similar, and is a platform-specific implementation.
+  (format #f *message-format* (event-sender message) (message-content message)))
+
 ;; Sending messages
 (define (send-message! message chat)
-  ;; TODO: implement, most likely implementation is to find the client and then pass a message
-  ;;   Alternatively, it could be a generic procedure.
+  ;; This client may be wrong. We want the platform of the platform to bridge *to*, not *from*.
   (let ((client (get-client (generic-event-platform message))))
+    ;; TODO: it's supposed to use the chat
     (write-client! client message)))
+
+;; TODO: combine function below/above into one? The above is for Discord.
+
+(define (bridge-message! message chat)
+  (let ((recipient-client (get-client (identifier-platform chat))))
+    ;; TODO: not all platforms would want format-bridged-message. This is for proof of concept.
+    ;;   Discord (via webhooks), Zephyr, Mattermost, etc let you override the sender username.
+    ;;   So each platform should be allowed to implement their own version of this! (generic)
+    ((recipient-client 'message-sender) (identifier-id chat) (format-bridged-message message))))
 
 (define (%default-event-handler event)
   (display (string ";Unimplemented (" (event-platform event) ") event: "))
@@ -132,7 +147,7 @@
         (let* ((chat (event-chat event))
 	       (equivalent-chats (linked-chats-get chat)))
           (for-each (lambda (other-chat)
-		      (send-message! event other-chat))
+		      (bridge-message! event other-chat))
                     equivalent-chats))))
     (%default-event-handler event)))
 
@@ -148,4 +163,3 @@
 (define write-client!
     (most-specific-generic-procedure 'write-client 2 #f))
 
-(define start-bridging!)

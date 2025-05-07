@@ -20,7 +20,6 @@
   (define port (subprocess-output-port signal-process))
   (assert (eqv? port (subprocess-input-port signal-process))) ;; It is a single port for both input & output
   (define delegate (make-json-rpc-based-client (make-port-based-client port)))
-  ;; TODO: FIX ;The object remote-function-caller is not applicable.
   (define json-rpc-call (delegate 'remote-function-caller))
   (define receiver (delegate 'raw-event-receiver))
   (define (%receive-raw-event!)
@@ -31,26 +30,20 @@
 	 (if (equal? method "receive")
 	     (json-key event "params") ;; We just care about the parameters
 	     (display (string "Signal: Unknown incoming method " method)))))))
-  ;; TODO: combine both senders into one? just check the length of the recipient string
-  (define (%send-direct-message recipient message)
-    (json-rpc-call "send"
-		   `(dict ("message" . ,message)
-			  ("recipient" . ,recipient))
-		   pp error)) ;; TODO: Define better callbacks
-  (define (%send-group-message group-id message)
-    (json-rpc-call "send"
-		   `(dict ("message" . ,message)
-			  ("group-id" . ,group-id))
-		   pp error)) ;; TODO: Same as above
+  (define (%send-message chat text)
+    ;; DMs/users are identifed by a 32-character UUID or a shorter phone number. Group IDs seem to be ~44 chars.
+    (let ((is-dm (<= (string-length chat) 36)))
+      (json-rpc-call "send"
+		     `(dict ("message" . ,text)
+			    ,(if is-dm `("recipient" . ,chat) `("group-id" . ,chat)))
+		     pp error)))
   (lambda (op)
     (case op
       ((get-platform-id) 'signal)
       ((%get-process) signal-process)
       ((%get-port) port)
       ((raw-event-receiver) %receive-raw-event!)
-      ;; TODO: combine both into one
-      ((direct-message-sender) %send-direct-message)
-      ((group-message-sender) %send-group-message)
+      ((message-sender) %send-message)
       (else (delegate op)))))
 (define-generic-procedure-handler make-client! (match-args signal-config?) make-signal!)
 
@@ -68,7 +61,7 @@
   (lambda (event)
     (and (event-key? event "envelope")
 	 (let ((envelope (event-key event "envelope")))
-	   ;; TODO: missing typingMessage (and potentially others? but even reactions have "dataMessage")
+	   ;; TODO(stretch): missing typingMessage (and potentially others? but even reactions have "dataMessage")
 	   (json-key-exists? envelope "dataMessage")))))
 
 (define-generic-procedure-handler message-content
@@ -80,7 +73,7 @@
 (define-generic-procedure-handler message-event?
   (match-args signal?)
   (lambda (event)
-    (and (chat-event? event) ;; TODO: ditto (and below too)
+    (and (chat-event? event) ;; TODO(stretch): ditto (and below too)
 	 (not (eqv? (message-content event) null)))))
 
 (define-generic-procedure-handler bridged-event?
@@ -90,7 +83,7 @@
   (lambda (_) #f))
 
 (define-generic-procedure-handler event-chat
-  ;; TODO: again would not handle typingMessage (because signal-cli returns a horrible JSON format
+  ;; TODO(stretch): again would not handle typingMessage (because signal-cli returns a horrible JSON format
   ;;   where the key used depends on the type of thing)
   (match-args signal?)
   (lambda (event)
