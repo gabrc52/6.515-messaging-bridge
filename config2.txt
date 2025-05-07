@@ -1,0 +1,6 @@
+(config
+ (bridge
+  (linked
+   (signal "YVs2/HSkS8viSYndY2hw3dHIFfWAR2Wl88/VNU/PreY=")
+   (signal "uWj8kwYxwYADr3L48dI3yi/eRQY/pytzVZ4et4XsjeE=")))
+ (signal phone-number (env "phone-number")))

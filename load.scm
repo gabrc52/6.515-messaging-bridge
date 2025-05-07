@@ -67,17 +67,17 @@
 
 ;; Load platform pieces
 (load-relative "platforms/common/port")
-; (load-relative "platforms/common/json-rpc")
+(load-relative "platforms/common/json-rpc")
 
 ;; Load each platform
 (load-relative "platforms/mattermost")
 (load-relative "platforms/dummy")
 (load-relative "platforms/discord")
+(load-relative "platforms/signal")
 ;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file
 ;; TODO: write a real config file / add the bot account / etc
-(load-config-file! "config.txt")
-(load-relative "main") ;; Entrypoint
-
-
+;;(load-config-file! "config.txt")
+(load-config-file! "config2.txt")
+;;(load-relative "main") ;; Entrypoint

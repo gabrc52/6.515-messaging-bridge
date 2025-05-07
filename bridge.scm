@@ -56,6 +56,10 @@
   (most-specific-generic-procedure 'chat-event? 1 #f))
 (register-predicate! chat-event? 'chat-event)
 
+(define typing-event?
+  (most-specific-generic-procedure 'typing-event? 1 #f))
+(register-predicate! typing-event? 'typing-event)
+
 (define message-event?
   (most-specific-generic-procedure 'message-event? 1 #f))
 (register-predicate! message-event? 'message-event)
@@ -67,6 +71,7 @@
 (set-predicate<=! chat-event? event?)
 (set-predicate<=! message-event? chat-event?)
 (set-predicate<=! reaction-event? chat-event?)
+(set-predicate<=! typing-event? chat-event?)
 
 ;; Not a distinct disjoint sub-type, but necessary to determine whether to bridge or not, and avoid loops.
 
@@ -89,6 +94,8 @@
 (define event-chat ;; mapping from <event> to a chat identifier
   (most-specific-generic-procedure 'event-chat 1 #f))
 
+;; For now, this is a human-readable representation (display name for showing in bridged messages)
+;; Later on, we might want event-sender-id and event-sender-username too
 (define event-sender
   (most-specific-generic-procedure 'event-sender 1 #f))
 
@@ -105,29 +112,15 @@
   ;;   Alternatively, it could be a generic procedure.
   (let ((client (cdr (assoc (generic-event-platform message) *all-clients*))))
     (write-client! client message)))
-  
-
-;; NOTE: because some of the event handlers are stateful, e.g. Discord has:
-;;  (let ((sequence-number (json-key event "s")))
-;;    (set! *heartbeat-number* sequence-number))
-;; At least some sort of event handler needs to be put in the client / message-accepting procedure
-;; since it does have access to local state.
-
-;;; Low-level event handler
-(define handle-raw-event! (chaining-generic-procedure 'handle-raw-event! 2 #f)) ;; Takes platform ID and event
 
 ;;; High-level event handler
 ; (define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
 (define handle-event! (most-specific-generic-procedure 'handle-event! 1 #f))
 
-;; TODO: it is likely that we need to implement a very similar type of chaining generic procedure
-;;   BUT in the other direction (from supertype to subtype rather than the opposite)
-;;   Don't do this until we must, though. (Copy the existing implementation but reverse the order.)
-
 (define-generic-procedure-handler handle-event!
   (match-args chat-event?)
-;   (lambda (super event)
-;     (super event)
+;;   (lambda (super event)
+;;     (super event)
   (lambda (event)
     (pp (list "Got event" event))
     (unless (bridged-event? event) ;; Crucial to avoid infinite loops
@@ -135,18 +128,12 @@
       ;;   and defining a handler for message-event?
       (when (message-event? event)
         (let ((chat (event-chat event))
-            (sender (event-sender event)))
-        (let ((equivalent-chats (linked-chats-get chat)))
+              (sender (event-sender event)))
+          (let ((equivalent-chats (linked-chats-get chat)))
             (for-each (lambda (other-chat)
-                ;; It is a different platform, but generics should take care of it :D
-                (send-message! event other-chat sender))
-                equivalent-chats)))))))
-
-;; TODO: is one platform-agnostic and one platform-specific?
-;; I think it has to be either one or the other so that `super` is defined and makes sense
-;; handle-raw-event HAS to be platform-specific
-;; but what if we want platform-specific high-level logic?
-;; Maybe have a third function then?
+			;; It is a different platform, but generics should take care of it :D
+			(send-message! event other-chat sender))
+                      equivalent-chats)))))))
 
 (define start-client!
     (most-specific-generic-procedure 'start-client! 1 #f))
@@ -156,3 +143,5 @@
 
 (define write-client!
     (most-specific-generic-procedure 'write-client 2 #f))
+
+(define start-bridging!)

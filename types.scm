@@ -125,6 +125,12 @@
 (define (make-event platform body)
   (%make-event platform body (get-universal-time)))
 
+(define (event-key event . keys)
+  (apply json-key (event-body event) keys))
+
+(define (event-key? event key)
+  (json-key-exists? (event-body event) key))
+
 ;; TODO: Remove if unused
 ;; discord? is too broad. We want to have discord-event? <= event? and so on
 ;; Actually we want subtypes in a different way so hmmm think about it

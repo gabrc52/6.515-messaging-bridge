@@ -1,42 +1,109 @@
-;; TODO: implement and make it even compile lol
-
-;;; Trying to get a clean implementation while also brainstorming the common interface
-
+(define signal? (platform-predicate 'signal))
 (define *signal-socket* "/tmp/signal-socket")
 (define *signal-binary* (os/find-program "signal-cli" ""))
 
-;; TODO: we need a way to associate the symbol 'signal with this maker (in the other direction, probably a simple key, value store)
+(define signal-config:phone-number
+  (make-property 'phone-number
+		 'predicate string?))
+(define signal-config?
+  (make-type 'signal-config (list signal-config:phone-number)))
+(set-predicate<=! signal-config? platform-config?)
+(register-config-constructor! 'signal signal-config?)
+(define signal-config-phone-number (property-getter signal-config:phone-number signal-config?))
 
-;; TODO: move these to a different file
-
-;; There is no `self` because no OOP but we can name a lambda (message passing procedure) and just use its name and return it
-
-;; We don't actually need ready? if we use threads,
-;; but it allows us to revert to the busy-waiting implementation if threads
-
-;; I guess they are more like mixins/delegates/idk
-
-(define (make-stream-based-messaging-client stream ready? getter putter)
-  )
-
-(define (make-port-based-messaging-client port)
-  (make-stream-based-messaging-client port
-				      port-ready? ;; alias for char-ready?
-))				      
-
-;; TODO: move common, non-signal stuff to something more general
-(define (make-signal)
-  (define signal-process
-    (start-pipe-subprocess *signal-binary*
-			   (vector *signal-binary* "daemon" "--socket" "/tmp/signal-socket")
+(define (make-signal! config)
+  (run-shell-command "pkill signal-cli -e") ;; HACK: There can only be one at a time. Kill the existing one.
+  (define phone-number (signal-config-phone-number config))
+  (define signal-process (start-pipe-subprocess *signal-binary*
+			   (vector *signal-binary* "-a" phone-number "daemon" "--socket" "/tmp/signal-socket")
 			   #()))
+  (sleep-current-thread 1000) ;; HACK: Wait for the socket to become active
   (define socket (open-unix-stream-socket "/tmp/signal-socket"))
+  (define delegate (make-json-rpc-based-client (make-port-based-client socket)))
+  ;; TODO: FIX ;The object remote-function-caller is not applicable.
+  (define json-rpc-call (delegate 'remote-function-caller))
+  (define receiver (delegate 'raw-event-receiver))
+  (define (%receive-raw-event!)
+    (when-available
+     (receiver)
+     (lambda (event)
+       (let ((method (json-key event "method")))
+	 (if (equal? method "receive")
+	     (json-key event "params") ;; We just care about the parameters
+	     (display (string "Signal: Unknown incoming method " method)))))))
+  ;; TODO: combine both senders into one? just check the length of the recipient string
+  (define (%send-direct-message recipient message)
+    (json-rpc-call "send"
+		   `(dict ("message" . ,message)
+			  ("recipient" . ,recipient))
+		   pp error)) ;; TODO: Define better callbacks
+  (define (%send-group-message group-id message)
+    (json-rpc-call "send"
+		   `(dict ("message" . ,message)
+			  ("group-id" . ,group-id))
+		   pp error)) ;; TODO: Same as above
   (lambda (op)
     (case op
-      ((get-platform) 'signal)
-      ;; TODO: some notion of a general sender, kind of like dispatch stores?
-      ;; TODO: do we need a lock? not if we have a queue, I guess? not sure
-      ;; TODO: but then we need the RPC stuff
-      ;; I think I have some cyclical dependencies in the design and need to think carefully about where to start...
-      ((get-sender) (lambda (jsexpr) (port-send-json socket 
-    ))))))
+      ((get-platform-id) 'signal)
+      ((%get-process) signal-process)
+      ((%get-port) socket)
+      ((raw-event-receiver) %receive-raw-event!)
+      ;; TODO: combine both into one
+      ((direct-message-sender) %send-direct-message)
+      ((group-message-sender) %send-group-message)
+      (else (delegate op)))))
+(define-generic-procedure-handler make-client! (match-args signal-config?) make-signal!)
+
+;; All messages are inside an "envelope"
+;; It appears to have "source", "sourceUuid", "sourceName", "sourceDevice", "timestamp",
+;;   "serverReceivedTimestamp", "serverDeliveredTimestamp", and either
+;;   "typingMessage" or "receiptMessage" or "dataMessage" (there may be more)
+;; Normal messages are "dataMessage". If it is in a group it will contain "groupInfo" inside the "dataMessage"
+;;   Otherwise that will be blank. Either way, the source (sender) will be set, whether a DM or not.
+;; Probably the easiest way to implement non-data messages would be to pre-process the messages
+;;   and replace "dataMessage" with "payload" and add a new "type" field
+
+(define-generic-procedure-handler chat-event?
+  (match-args signal?) ;; TODO: if this does not work, make a predicate for events (and same for below)
+  (lambda (event)
+    (and (event-key? event "envelope")
+	 (let ((envelope (event-key event "envelope")))
+	   ;; TODO: missing typingMessage (and potentially others? but even reactions have "dataMessage")
+	   (json-key-exists? envelope "dataMessage")))))
+
+(define-generic-procedure-handler message-content
+  (match-args signal?)
+  (lambda (event)
+    (guarantee chat-event? event)
+    (event-key event "envelope" "dataMessage" "message")))
+
+(define-generic-procedure-handler message-event?
+  (match-args signal?)
+  (lambda (event)
+    (and (chat-event? event) ;; TODO: ditto (and below too)
+	 (not (eqv? (message-content event) null)))))
+
+(define-generic-procedure-handler bridged-event?
+  (match-args signal?)
+  ;; In my testing, Signal does not send us messages sent by ourselves.
+  ;; TODO: double check / implement it defensively (maybe when multiple devices, it might)
+  (lambda (_) #f))
+
+(define-generic-procedure-handler event-chat
+  ;; TODO: again would not handle typingMessage (because signal-cli returns a horrible JSON format
+  ;;   where the key used depends on the type of thing)
+  (match-args signal?)
+  (lambda (event)
+    (guarantee chat-event? event)
+    (let ((dataMessage (event-key event "envelope" "dataMessage")))
+      (make-identifier 'signal 
+		       (if (json-key-exists? dataMessage "groupInfo")
+			   (json-key dataMessage "groupInfo" "groupId")
+			   ;; For now, the chat in direct messages shall be the sender (if it is in a DM)
+			   (event-key event "envelope" "sourceUuid"))))))
+
+(define-generic-procedure-handler event-sender
+  (match-args signal?)
+  (lambda (event)
+    (guarantee chat-event? event)
+    (event-key event "envelope" "sourceName")))

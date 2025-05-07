@@ -36,9 +36,10 @@
   (begin))
 
 ;; TODO: it would be nice to be able eto do something like
-(json-rpc-call "send"
-	       'group signal-group-id
-	       'message "Hello world!") ;; (if it is case insensitive)
+;; (json-rpc-call "send"
+;; 	       'group signal-group-id
+;; 	       'message "Hello world!") ;; (if it is case insensitive)
+;; YES: implemented
 
 ;; Receiving
 (pp (port-next-json socket))
@@ -67,7 +68,7 @@
  socket
  ;;(current-output-port) ;; For debugging
  (%json-rpc-call-expr "send"
-		      `(dict ("message" . "Hello!!! So true bestie")
+		      `(dict ("message" . "Hello!!! :D")
 			     ("group-id" . ,signal-group-id))))
 (pp (port-next-json socket))
 

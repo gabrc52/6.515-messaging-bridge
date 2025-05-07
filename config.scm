@@ -60,6 +60,8 @@
 
 ;; Associative list of all clients (hash table would be overkill)
 (define *all-clients* '())
+(define (get-client platform)
+  (cdr (assoc platform *all-clients*)))
 
 ;; TODO: it does not actually validate that the platforms you give under `bridge` actually exist below
 (define (load-config! config)
