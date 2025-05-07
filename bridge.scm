@@ -107,33 +107,37 @@
 ;;; Message receiving and sending
 
 ;; Sending messages
-(define (send-message! message chat #!optional sender)
+(define (send-message! message chat)
   ;; TODO: implement, most likely implementation is to find the client and then pass a message
   ;;   Alternatively, it could be a generic procedure.
   (let ((client (cdr (assoc (generic-event-platform message) *all-clients*))))
     (write-client! client message)))
 
-;;; High-level event handler
-; (define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
-(define handle-event! (most-specific-generic-procedure 'handle-event! 1 #f))
+(define (%default-event-handler event)
+  (display (string ";Unimplemented (" (event-platform event) ") event: "))
+  (write (event-body event))
+  (newline) (newline))
 
-(define-generic-procedure-handler handle-event!
-  (match-args chat-event?)
-;;   (lambda (super event)
-;;     (super event)
-  (lambda (event)
-    (pp (list "Got event" event))
+;;; High-level event handler
+;; (define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
+;; (define handle-event! (most-specific-generic-procedure 'handle-event! 1 %default-event-handler))
+
+;; TODO: the generic procedure did not seem to be working right?
+;;   It calls the default handler even if the predicate is true. Very strange.
+;;   See 75fc6e08e17c2c8c827a33c7e0ef9eed60a49989 if you wish to restore the generic procedure.
+(define (handle-event! event)
+  (if (chat-event? event)
     (unless (bridged-event? event) ;; Crucial to avoid infinite loops
-      ;; TODO: we can avoid this condition by doing the above, calling the subtype's handler here,
-      ;;   and defining a handler for message-event?
       (when (message-event? event)
-        (let ((chat (event-chat event))
-              (sender (event-sender event)))
-          (let ((equivalent-chats (linked-chats-get chat)))
-            (for-each (lambda (other-chat)
-			;; It is a different platform, but generics should take care of it :D
-			(send-message! event other-chat sender))
-                      equivalent-chats)))))))
+        (let* ((chat (event-chat event))
+	       (equivalent-chats (linked-chats-get chat)))
+          (for-each (lambda (other-chat)
+		      (send-message! event other-chat))
+                    equivalent-chats))))
+    (%default-event-handler event)))
+
+;; Do generic procedures not work on threads?
+
 
 (define start-client!
     (most-specific-generic-procedure 'start-client! 1 #f))

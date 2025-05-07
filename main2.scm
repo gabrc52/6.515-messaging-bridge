@@ -11,8 +11,8 @@
 	((client 'raw-event-receiver)) ;; This may be blocking
 	(lambda (raw-event)
 	  ;; TODO: put in queue instead and have a thread that handles all events in that queue
-	  (pp raw-event)))
-	  ;;(handle-event! (make-event platform raw-event))))
+	  ;; (display (string ";; Got " platform " event: ")) (write raw-event) (newline)
+	  (handle-event! (make-event platform raw-event))))
        (loop)))
    (symbol platform '-thread)))
 	 
