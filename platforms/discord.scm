@@ -176,6 +176,7 @@
 ;;;;;;;;;;;;;;;;;;
 
 (define discord? (platform-predicate 'discord))
+(register-predicate! discord? 'discord)
 (define discord-config:token
   (make-property 'token
 		 'predicate string?))
@@ -242,6 +243,7 @@
 (define-generic-procedure-handler chat-event?
   (match-args discord?) 
   (lambda (event)
+    (write-line "We are at Discord chat-event?")
     ; (pp ("[chat-event?]" event))
     (and (json-dict? (event-body event)) (event-key? event "op") (equal? (event-key event "op") op-dispatch))))
 

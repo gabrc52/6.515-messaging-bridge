@@ -1,4 +1,5 @@
 (define signal? (platform-predicate 'signal))
+(register-predicate! signal? 'signal)
 (define *signal-socket* "/tmp/signal-socket")
 (define *signal-binary* (os/find-program "signal-cli" ""))
 
@@ -58,6 +59,7 @@
 (define-generic-procedure-handler chat-event?
   (match-args signal?) ;; TODO: if this does not work, make a predicate for events (and same for below)
   (lambda (event)
+    (write-line "We are at Signal chat-event?")
     (and (event-key? event "envelope")
 	 (let ((envelope (event-key event "envelope")))
 	   ;; TODO(stretch): missing typingMessage (and potentially others? but even reactions have "dataMessage")

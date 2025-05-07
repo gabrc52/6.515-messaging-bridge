@@ -1,5 +1,6 @@
 ;;; Generic predicate
 (define mattermost? (platform-predicate 'mattermost))
+(register-predicate! mattermost? 'mattermost)
 
 ;;; Config format
 (define mattermost-config?
