@@ -1,5 +1,5 @@
 (config
    (bridge
-    (linked (discord "1365742631036125256")))
+    (linked (discord "1369642663191777391") (discord "1369642682086981703")))
    (discord
-    bot-token (env "discord-token")))
+    token (env "discord-token")))
