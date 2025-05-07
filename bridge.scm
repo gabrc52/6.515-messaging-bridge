@@ -110,7 +110,7 @@
 (define (send-message! message chat)
   ;; TODO: implement, most likely implementation is to find the client and then pass a message
   ;;   Alternatively, it could be a generic procedure.
-  (let ((client (cdr (assoc (generic-event-platform message) *all-clients*))))
+  (let ((client (get-client (generic-event-platform message))))
     (write-client! client message)))
 
 (define (%default-event-handler event)
