@@ -15,11 +15,11 @@
   (run-shell-command "pkill signal-cli -e") ;; HACK: There can only be one at a time. Kill the existing one.
   (define phone-number (signal-config-phone-number config))
   (define signal-process (start-pipe-subprocess *signal-binary*
-			   (vector *signal-binary* "-a" phone-number "daemon" "--socket" "/tmp/signal-socket")
+			   (vector *signal-binary* "-a" phone-number "jsonRpc")
 			   #()))
-  (sleep-current-thread 1000) ;; HACK: Wait for the socket to become active
-  (define socket (open-unix-stream-socket "/tmp/signal-socket"))
-  (define delegate (make-json-rpc-based-client (make-port-based-client socket)))
+  (define port (subprocess-output-port signal-process))
+  (assert (eqv? port (subprocess-input-port signal-process))) ;; It is a single port for both input & output
+  (define delegate (make-json-rpc-based-client (make-port-based-client port)))
   ;; TODO: FIX ;The object remote-function-caller is not applicable.
   (define json-rpc-call (delegate 'remote-function-caller))
   (define receiver (delegate 'raw-event-receiver))
@@ -46,7 +46,7 @@
     (case op
       ((get-platform-id) 'signal)
       ((%get-process) signal-process)
-      ((%get-port) socket)
+      ((%get-port) port)
       ((raw-event-receiver) %receive-raw-event!)
       ;; TODO: combine both into one
       ((direct-message-sender) %send-direct-message)
