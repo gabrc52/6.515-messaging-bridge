@@ -12,7 +12,6 @@
 (define signal-config-phone-number (property-getter signal-config:phone-number signal-config?))
 
 (define (make-signal! config)
-  (run-shell-command "pkill signal-cli -e") ;; HACK: There can only be one at a time. Kill the existing one.
   (define phone-number (signal-config-phone-number config))
   (define signal-process (start-pipe-subprocess *signal-binary*
 			   (vector *signal-binary* "-a" phone-number "jsonRpc")
