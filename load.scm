@@ -58,12 +58,11 @@
 ;; Uses websockets
 (load-relative "websockets")
 
-;; These might change in their file structure, this for now:
 (load-relative "util") ;; misc utilities
 (load-relative "types")
-(load-relative "bridge")
-(load-relative "config")
 (load-relative "queue")
+(load-relative "generics")
+(load-relative "config")
 
 ;; Load platform pieces
 (load-relative "platforms/common/port")
@@ -75,7 +74,10 @@
 (load-relative "platforms/discord")
 (load-relative "platforms/signal")
 
+;; Apparently it has to be below, otherwise generic procedures will silently be wrong
+(load-relative "bridge")
+
 ;; Load the config file
 ;; TODO: write a real config file / add the bot account / etc
-(load-config-file! "config.txt")
-(load-relative "main") ;; Entrypoint
+;;(load-config-file! "config.txt")
+;;(load-relative "main") ;; Entrypoint
