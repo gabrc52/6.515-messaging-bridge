@@ -9,19 +9,22 @@
                       (format #false "~A: ~A" (car h) (cdr h))))
               alist))
 
-(define (curl-http-request method baseurl path #!optional headers)
+(define (curl-http-request method baseurl path #!optional headers content)
   (let ((headers (if (default-object? headers) (list) headers))
-	(url (string-append baseurl path)))
+	(url (string-append baseurl path))
+    (content (if (default-object? content) '() (list "-d" content))))
     (call-with-output-string
      (lambda (port)
        (assert (zero?
                 (run-synchronous-subprocess
                  "/usr/bin/curl"
-                 (cons* "--request" method
-			"--location"
-                        "--silent"
-                        "--url" url
-                        (prepare-headers headers))
+                 (append
+                    (cons* "--request" method
+                            "--location"
+                            "--silent"
+                            "--url" url
+                            (prepare-headers headers))
+                    content)
                  'output port))
                "Error in HTTP request."
                url)))))
