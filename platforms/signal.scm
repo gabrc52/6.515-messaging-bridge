@@ -37,6 +37,7 @@
 		     `(dict ("message" . ,text)
 			    ,(if is-dm `("recipient" . ,chat) `("group-id" . ,chat)))
 		     pp error)))
+  (write-line "Signal client created.")
   (lambda (op)
     (case op
       ((get-platform-id) 'signal)
@@ -60,7 +61,7 @@
   (match-args signal?) ;; TODO: if this does not work, make a predicate for events (and same for below)
   (lambda (event)
     (assert (signal? event) "should be signal event")
-    (write-line "We are at Signal chat-event?")
+    ;; (write-line "We are at Signal chat-event?")
     (and (event-key? event "envelope")
 	 (let ((envelope (event-key event "envelope")))
 	   ;; TODO(stretch): missing typingMessage (and potentially others? but even reactions have "dataMessage")

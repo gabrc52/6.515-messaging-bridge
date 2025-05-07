@@ -58,9 +58,7 @@
     ((recipient-client 'message-sender) (identifier-id chat) (format-bridged-message message))))
 
 (define (%default-event-handler event)
-  (display (string ";Unimplemented (" (event-platform event) ") event: "))
-  (write (event-body event))
-  (newline) (newline))
+  (display (string "Unimplemented " (event-platform event) " event: " event)) (newline))
 
 (define (reply! message reply-text)
   (let* ((client (get-client (generic-event-platform message)))
@@ -79,7 +77,7 @@
 (define (inspect-event event)
     (pp (list "Classifying event:" event))
     (pp (list "Event?" (event? event)))
-    ; (pp (list "Event Body:" (event-body event)))
+    ;; (pp (list "Event Body:" (event-body event)))
     (pp (list "Chat event?" (chat-event? event)))
     (pp (list "Bridge event?" (bridged-event? event)))
     (pp (list "Message event?" (message-event? event))))
@@ -90,7 +88,7 @@
 ;;   It calls the default handler even if the predicate is true. Very strange.
 ;;   See 75fc6e08e17c2c8c827a33c7e0ef9eed60a49989 if you wish to restore the generic procedure.
 (define (handle-event! event)
-  (inspect-event event) ;; For debugging
+  ;; (inspect-event event) ;; For debugging
   (if (chat-event? event)
       (unless (bridged-event? event) ;; Crucial to avoid infinite loops
 	(when (message-event? event)

@@ -6,6 +6,9 @@
        "~/local/6.5150/sdf/manager/load"))
 (manage 'new 'user-defined-types)
 
+;; gjs said he isn't actually sure if running it all at once may work. You may need to run the manager first,
+;; and THEN the rest of the stuff so it uses the environment of the manager.
+
 ;; Configuration:
 (define *project-home* (if
 			(equal? (current-user-name) "rgabriel")

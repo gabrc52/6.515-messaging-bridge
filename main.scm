@@ -13,9 +13,7 @@
 	  (let ((event (make-event platform raw-event)))
             ;; TODO: put in queue instead and have a thread that handles all events in that queue
             ;; (display (string ";; Got " platform " event: ")) (write raw-event) (newline)
-	    (pp (list "Main received event" event
-		 (list '(discord? event) (discord? event))
-		 (list '(signal? event) (signal? event))))
+	    (display (string "Main received " platform " event " event)) (newline)
 	    (handle-event! event))))
        (loop)))
    (symbol platform '-thread)))
