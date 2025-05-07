@@ -59,6 +59,7 @@
 (define-generic-procedure-handler chat-event?
   (match-args signal?) ;; TODO: if this does not work, make a predicate for events (and same for below)
   (lambda (event)
+    (assert (signal? event) "should be signal event")
     (write-line "We are at Signal chat-event?")
     (and (event-key? event "envelope")
 	 (let ((envelope (event-key event "envelope")))

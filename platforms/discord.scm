@@ -243,6 +243,7 @@
 (define-generic-procedure-handler chat-event?
   (match-args discord?) 
   (lambda (event)
+    (assert (discord? event) "should be discord event")
     (write-line "We are at Discord chat-event?")
     ; (pp ("[chat-event?]" event))
     (and (json-dict? (event-body event)) (event-key? event "op") (equal? (event-key event "op") op-dispatch))))
