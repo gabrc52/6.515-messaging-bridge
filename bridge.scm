@@ -140,7 +140,16 @@
 ;; TODO: the generic procedure did not seem to be working right?
 ;;   It calls the default handler even if the predicate is true. Very strange.
 ;;   See 75fc6e08e17c2c8c827a33c7e0ef9eed60a49989 if you wish to restore the generic procedure.
+
+(define (inspect-event event)
+    (pp (list "Classifying event:" event))
+    (pp (list "Event?" (event? event)))
+    ; (pp (list "Event Body:" (event-body event)))
+    (pp (list "Chat event?" (chat-event? event)))
+    (pp (list "Bridge event?" (bridged-event? event)))
+    (pp (list "Message event?" (message-event? event))))
 (define (handle-event! event)
+;   (inspect-event event) ;; For debugging
   (if (chat-event? event)
     (unless (bridged-event? event) ;; Crucial to avoid infinite loops
       (when (message-event? event)
