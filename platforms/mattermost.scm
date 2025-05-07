@@ -17,7 +17,7 @@
   (lambda (message)
     (case message
       ((get-platform-id) 'mattermost)
-      (else (error "not implemented")))))
+      (else (error (list "Not implemented:" message))))))
 (define-generic-procedure-handler make-client!
   (match-args mattermost-config?)
   make-mattermost!)
