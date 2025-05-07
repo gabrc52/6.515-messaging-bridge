@@ -1,12 +1,12 @@
 (config
  (bridge
-  ;; (linked (discord "1369642663191777391") (signal "YVs2/HSkS8viSYndY2hw3dHIFfWAR2Wl88/VNU/PreY="))
-  ;; (linked (signal "uWj8kwYxwYADr3L48dI3yi/eRQY/pytzVZ4et4XsjeE=") (discord "1369642682086981703")))
+  ;; (linked (discord "1369642663191777391") (discord "1369642682086981703"))
+  (linked (discord "1369642663191777391") (signal "YVs2/HSkS8viSYndY2hw3dHIFfWAR2Wl88/VNU/PreY="))
+  (linked (signal "uWj8kwYxwYADr3L48dI3yi/eRQY/pytzVZ4et4XsjeE=") (discord "1369642682086981703"))
   ;; (linked (signal "uWj8kwYxwYADr3L48dI3yi/eRQY/pytzVZ4et4XsjeE=") (signal "YVs2/HSkS8viSYndY2hw3dHIFfWAR2Wl88/VNU/PreY="))
-  (linked (discord "1369642663191777391") (discord "1369642682086981703"))
   )
  (discord
   token (env "discord-token"))
- ;; (signal
- ;;  phone-number (env "phone-number"))
+ (signal
+  phone-number (env "phone-number"))
  )
