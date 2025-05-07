@@ -141,6 +141,20 @@
 ;;   It calls the default handler even if the predicate is true. Very strange.
 ;;   See 75fc6e08e17c2c8c827a33c7e0ef9eed60a49989 if you wish to restore the generic procedure.
 
+(define (reply! message reply-text)
+  (let* ((client (get-client (generic-event-platform message)))
+	 (sender (client 'message-sender)))
+    ;; TODO: for succintness it would be nice if the sender took either an identifier or a chat
+    (sender (identifier-id (event-chat message)) reply-text)))
+
+(define (handle-commands! message)
+  (let ((content (message-content message)))
+    (if (equal? content "!which-chat")
+	(begin
+	  (reply! message (string (identifier-id (event-chat message))))
+	  #t)
+	#f)))
+
 (define (inspect-event event)
     (pp (list "Classifying event:" event))
     (pp (list "Event?" (event? event)))
@@ -149,19 +163,19 @@
     (pp (list "Bridge event?" (bridged-event? event)))
     (pp (list "Message event?" (message-event? event))))
 (define (handle-event! event)
-;   (inspect-event event) ;; For debugging
+  (inspect-event event) ;; For debugging
   (if (chat-event? event)
-    (unless (bridged-event? event) ;; Crucial to avoid infinite loops
-      (when (message-event? event)
-        (let* ((chat (event-chat event))
-	       (equivalent-chats (linked-chats-get chat)))
-          (for-each (lambda (other-chat)
-		      (bridge-message! event other-chat))
-                    equivalent-chats))))
-    (%default-event-handler event)))
+      (unless (bridged-event? event) ;; Crucial to avoid infinite loops
+	(when (message-event? event)
+	  (unless (handle-commands! event)
+            (let* ((chat (event-chat event))
+		   (equivalent-chats (linked-chats-get chat)))
+              (for-each (lambda (other-chat)
+			  (bridge-message! event other-chat))
+			equivalent-chats)))))
+      (%default-event-handler event)))
 
 ;; Do generic procedures not work on threads?
-
 
 (define start-client!
     (most-specific-generic-procedure 'start-client! 1 #f))
