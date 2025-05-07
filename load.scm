@@ -74,10 +74,10 @@
 (load-relative "platforms/dummy")
 (load-relative "platforms/discord")
 (load-relative "platforms/signal")
-;; The actual logic of starting the bridge makes more sense to have in another file?
 
 ;; Load the config file
 ;; TODO: write a real config file / add the bot account / etc
 ;;(load-config-file! "config.txt")
 (load-config-file! "config2.txt")
 ;;(load-relative "main") ;; Entrypoint
+(load-relative "main2")
