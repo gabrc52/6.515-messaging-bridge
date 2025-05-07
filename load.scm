@@ -77,7 +77,5 @@
 
 ;; Load the config file
 ;; TODO: write a real config file / add the bot account / etc
-;;(load-config-file! "config.txt")
-(load-config-file! "config2.txt")
-;;(load-relative "main") ;; Entrypoint
-(load-relative "main2")
+(load-config-file! "config.txt")
+(load-relative "main") ;; Entrypoint
