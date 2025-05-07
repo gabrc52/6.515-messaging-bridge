@@ -46,14 +46,14 @@
 
 ;; Equivalent of dict[key]
 (define (%json-key dict key)
-  (assert (json-dict? dict))
+  (assert (json-dict? dict) (string "Tried to get " key " of non-dict " dict))
   (let ((pair (assoc key (cdr dict))))
     (if (false? pair)
 	(error (format #f "Key ~A not found on ~A" key dict))
 	(cdr (assoc key (cdr dict))))))
 
 (define (json-key-exists? dict key)
-  (assert (json-dict? dict))
+  (assert (json-dict? dict) (string "Tried to test for " key " of non-dict " dict))
   (let ((pair (assoc key (cdr dict))))
     (not (false? pair))))
 
