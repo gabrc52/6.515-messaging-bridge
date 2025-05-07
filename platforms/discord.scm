@@ -64,8 +64,8 @@
 ;; Heartbeat Loop
 (define (discord-keepalive-fetch last-ts) ;; TODO: generalize
     (if (> (- (get-time-ms) last-ts) *heartbeat-interval*)
-        (cons (#t get-time-ms))
-        (cons (#f last-ts))))
+        (cons #t get-time-ms)
+        (cons #f last-ts)))
 ;; Returns (interval-passed? last-interval-started-time)
 
 (define (discord-keepalive-loop discord-socket ts)
