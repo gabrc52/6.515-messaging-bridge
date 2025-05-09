@@ -13,3 +13,4 @@ Dependencies:
 * [Software Design for Flexibility attached code](https://groups.csail.mit.edu/mac/users/gjs/6.945/sdf.tgz) (need to adjust paths in `load.scm`)
 * [Racket](https://racket-lang.org/)
 * [websocat](https://github.com/vi/websocat)
+* For Signal support, you need to install and register for [signal-cli](https://github.com/AsamK/signal-cli).
