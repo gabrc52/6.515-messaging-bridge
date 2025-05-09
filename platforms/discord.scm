@@ -65,9 +65,8 @@
 (define (discord-keepalive-loop discord-socket)
   (when (websocket-connected? discord-socket)
     (sleep-current-thread *heartbeat-interval*)
-    (begin
-      (write-line "[discord-keepalive-loop] Sending heartbeat!")
-      (discord-send-heartbeat! discord-socket))
+    (write-line "[discord-keepalive-loop] Sending heartbeat!")
+    (discord-send-heartbeat! discord-socket)
     (discord-keepalive-loop discord-socket)))
 
 (define (start-discord-keepalive-loop discord-socket)
