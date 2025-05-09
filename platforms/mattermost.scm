@@ -5,10 +5,7 @@
 ;;; Config format
 (define mattermost-config?
   (make-type 'mattermost-config
-	     (list http-platform-config:base-url
-		   ;; Let's use tokens for now (TODO: handle username/password)
-		   ;; Would it be possible to implement type unions? (either access token or password is set)
-		   platform-config:access-token)))
+	     (list http-platform-config:base-url platform-config:access-token)))
 (set-predicate<=! mattermost-config? http-platform-config?)
 (register-config-constructor! 'mattermost mattermost-config?)
 

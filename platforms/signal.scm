@@ -58,7 +58,7 @@
 ;;   and replace "dataMessage" with "payload" and add a new "type" field
 
 (define-generic-procedure-handler chat-event?
-  (match-args signal?) ;; TODO: if this does not work, make a predicate for events (and same for below)
+  (match-args signal?)
   (lambda (event)
     (assert (signal? event) "should be signal event")
     ;; (write-line "We are at Signal chat-event?")

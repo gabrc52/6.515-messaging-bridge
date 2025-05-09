@@ -42,9 +42,6 @@
 		   (unless (eqv? item1 item2)
 		     (f item1 item2)))))
 
-;;; Reverse Chaining Generic Procedures
-;; TODO: implement if needed
-
 (define (get-time-ms)
     (let ((ticks (real-time-clock)))
         (internal-time/ticks->seconds ticks)))

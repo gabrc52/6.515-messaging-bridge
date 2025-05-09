@@ -63,7 +63,6 @@
 (define (get-client platform)
   (cdr (assoc platform *all-clients*)))
 
-;; TODO: it does not actually validate that the platforms you give under `bridge` actually exist below
 (define (load-config! config)
   (guarantee (list-beginning-with? 'config) config)
   ;; The first element of config must be the linked chats, then all the platform-specific options

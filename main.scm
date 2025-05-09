@@ -1,7 +1,3 @@
-;; Gabriel's implementation of main
-;; TODO: Consolidate interfaces, make this work with queues
-;;   We could also make clients tell us whether we need to start a thread for them or not.
-
 (define (create-client-thread! platform client)
   (create-thread
    #f

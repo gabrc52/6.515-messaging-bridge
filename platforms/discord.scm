@@ -68,6 +68,7 @@
         (cons #f last-ts)))
 ;; Returns (interval-passed? last-interval-started-time)
 
+;; TODO: use sleep-current-thread instead to avoid busy waiting
 (define (discord-keepalive-loop discord-socket ts)
     (when (websocket-connected? discord-socket)
         (let ((fetched (discord-keepalive-fetch ts)))

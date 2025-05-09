@@ -1,9 +1,3 @@
-;; TODO: remove, I think we don't need this anymore
-;; Hack to use instead of event-platform since some events (like discord) currently use their own record type
-;;   instead of just the event type.
-(define generic-event-platform
-  (simple-generic-procedure 'event-chat 1 event-platform))
-
 ;; Create the actual platform object based on the config
 (define make-client!
   (simple-generic-procedure 'make-client! 1 #f))
@@ -15,10 +9,6 @@
 ;;; They are platform-specific generic procedures.
 
 ;; A chat event belongs to a chat, rather than something more general or low-level
-;; TODO: first thing if something does not work try omitting the ? in the symbols below
-;; (define chat-event?
-  ;; (most-specific-generic-procedure 'chat-event 1 #f))
-
 (define chat-event?
   (simple-generic-procedure 'chat-event 1 #f))
 

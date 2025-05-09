@@ -35,7 +35,6 @@ def renew_kerberos_tickets():
     """
     os.system(f"kinit {OWN_KERB}@{DEFAULT_REALM} -k -t {KEYTAB_PATH}")
 
-# TODO: we don't need the zephyr.subs parsing and writing logic
 
 # TODO: document how to pip install the library and the fact i had to do the workarounds here
 # https://stackoverflow.com/questions/43982543/importerror-no-module-named-cython

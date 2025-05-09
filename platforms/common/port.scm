@@ -1,3 +1,7 @@
+;; TODO: handle when you can't parse JSON or when the port reaches #!eof
+;; Instead of a port, we can receive a thunk to reconstruct the port if so
+;;   (e.g. for Discord there is some special reconnection needed)
+
 (define (make-port-based-client port)
   (define (%receive-raw-event-blocking!)
     (string->jsexpr (read-line port)))

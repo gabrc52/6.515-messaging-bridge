@@ -43,13 +43,6 @@
   ;;   of a record type or similar, and is a platform-specific implementation.
   (format #f *message-format* (event-sender message) (message-content message)))
 
-;; Sending messages (UNUSED - remove?)
-(define (send-message! message chat)
-  ;; This client may be wrong. We want the platform of the platform to bridge *to*, not *from*.
-  (let ((client (get-client (generic-event-platform message))))
-    ;; TODO: it's supposed to use the chat
-    (write-client! client message)))
-
 (define (bridge-message! message chat)
   (let ((recipient-client (get-client (identifier-platform chat))))
     ;; TODO: not all platforms would want format-bridged-message. This is for proof of concept.
@@ -61,7 +54,7 @@
   (display (string "Unimplemented " (event-platform event) " event: " event)) (newline))
 
 (define (reply! message reply-text)
-  (let* ((client (get-client (generic-event-platform message)))
+  (let* ((client (get-client (event-platform message)))
 	 (sender (client 'message-sender)))
     ;; TODO: for succintness it would be nice if the sender took either an identifier or a chat
     (sender (identifier-id (event-chat message)) reply-text)))
@@ -84,7 +77,7 @@
 ;;; High-level event handler
 ;; (define handle-event! (chaining-generic-procedure 'handle-event! 1 #f))
 ;; (define handle-event! (most-specific-generic-procedure 'handle-event! 1 %default-event-handler))
-;; TODO: the generic procedure did not seem to be working right?
+;; The generic procedure did not seem to be working right?
 ;;   It calls the default handler even if the predicate is true. Very strange.
 ;;   See 75fc6e08e17c2c8c827a33c7e0ef9eed60a49989 if you wish to restore the generic procedure.
 (define (handle-event! event)

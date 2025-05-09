@@ -29,9 +29,7 @@
                "Error in HTTP request."
                url)))))
 
-;; TODO: We need function combinators to fix the baseurl and only specify the path (already in SDF)
+;; It would be nice to have function combinators to fix the baseurl and only specify the path
 ;; Or a function combinator that lets you specify headers (authentication)
-;; We can also get some function combinators for converting to JSON
-;;   (then the new functions just need the more specific request)
-;; And maybe a way of declaratively expressing which combinators need to be applied?
+
 

@@ -64,12 +64,6 @@
         (%dummy-chat-event:make sender chat (event-platform event) content (event-timestamp event))))
         ;; TODO: actually subtype event
 
-;; Generic getters:
-(define-generic-procedure-handler generic-event-platform
-    (match-args dummy-chat-event?)
-    (lambda (event)
-        (dummy-chat-event:platform event)))
-
 (define-generic-procedure-handler event-chat
     (match-args dummy-chat-event?)
     (lambda (event)

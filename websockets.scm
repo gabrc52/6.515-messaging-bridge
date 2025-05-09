@@ -54,30 +54,11 @@
 
 ;; These are just operations on ports, but good for websockets too
 
-;; Not sure if this is a good name.
-;; TODO: For abstraction we should have something called message-available?
-;;   (and it can work with ports, but not necessarily)
-;; Yeah, but that is a higher level wrapper for messages, we should just wrap the current functions
-;;   into the domain-specific functions we want
 (define port-ready? char-ready?)
 (define (websocket-ready? websocket)
   (port-ready? (websocket-port websocket)))
 
-;; Would this help?
-#||
-(define (websocket-ready? websocket)
-  (let ((subprocess (websocket-subprocess websocket))
-	(port (websocket-port websocket)))
-    (and (subprocess-running? subprocess) (port-ready? port))))
-||#
-
 ;; Defensive: These functions provide extra guardrails by not hanging when there is no new message
-
-(define (port-next-line port)
-  (and (port-ready? port)
-       (read-line port)))
-(define (websocket-next-line websocket)
-  (port-next-line (websocket-port websocket)))
 
 ;; When not #f, do something
 ;; Question: would continuations help here? Probably not
@@ -86,21 +67,6 @@
       (callback obj-or-false)
       #f))
 
-;; TODO: handle when you can't parse JSON or when the port reaches #!eof
-(define (port-next-json port)
-  (when-available (port-next-line port) string->jsexpr))
-(define (websocket-next-json websocket)
-  (port-next-json (websocket-port websocket)))
-
-;; Blocking json from port
-(define (port-next-json-blocking port)
-  (string->jsexpr (read-line port)))
-
-(define (websocket-next-json-blocking websocket)
-  (port-next-json-blocking (websocket-port websocket)))
-
-
-;; TODO: should the get/send be curried? it's very easy to get a getter/sender function instead
 (define (port-send-line port string)
   (display string port)
   (newline port)
@@ -112,11 +78,3 @@
 (define (websocket-send-json websocket jsexpr)
   (port-send-json (websocket-port websocket) jsexpr))
 
-
-;; TODO: move TODOs below to a separate messaging-client.scm thing or something
-
-;; TODO: something like make-websocket-message-receiver or something
-;; or something like message client which abstracts both plain HTTPS and websockets
-
-;; TODO: we need a thing which takes multiple ports and checks them all, and calls callbacks
-;; depending. This is why we 

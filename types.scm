@@ -21,7 +21,6 @@
   (and (eqv? (identifier-platform identifier1) (identifier-platform identifier2))
        (equal? (identifier-id identifier1) (identifier-id identifier2))))
 
-;; TODO: cache this?
 (define (identifier-hash identifier)
   (string-hash
    (string (identifier-platform identifier) ":" (identifier-id identifier))))
@@ -56,7 +55,6 @@
   (make-property 'password
 		 'predicate string?))
 
-;; TODO: we could allow setting the token to some "undefined" option so that it is obtained by a password
 (define platform-config:access-token
   (make-property 'access-token
 		 'predicate string?))
@@ -84,10 +82,8 @@
 (define http-platform-config:base-url
   (make-property 'base-url
 		 'predicate string?))
-;; TODO: maybe we want a better URL-specialized predicate
 ;; NOTE: The SDF implementation of user-defined types doesn't actually seem to use the predicate to perform
 ;;   validation when constructing. Or hmm. It should. I think it did during the adventure game with bias?
-;; TODO: check the user-defined-types code / ask gjs
 
 (define http-platform-config?
   (make-type 'http-platform-config (list http-platform-config:base-url)))
@@ -130,13 +126,3 @@
 
 (define (event-key? event key)
   (json-key-exists? (event-body event) key))
-
-;; TODO: Remove if unused
-;; discord? is too broad. We want to have discord-event? <= event? and so on
-;; Actually we want subtypes in a different way so hmmm think about it
-;; No, I think we can just use event-platform, we don't want per-platform subtypes
-(define (make-event-predicate platform)
-  (lambda (event)
-    (and (event? event)
-	 (platform-ids-equal? (event-platform event) platform))))
-

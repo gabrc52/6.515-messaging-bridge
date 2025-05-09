@@ -33,4 +33,4 @@
                     val
                     (cadr val))))))
 
-;; TODO: maybe plop these into the environment with a singular command to avoid re-parsing & ease development
+;; TODO: maybe plop these into real environment variables with a singular command to avoid re-parsing
