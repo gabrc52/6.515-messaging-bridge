@@ -9,5 +9,7 @@ Authors:
 This bridges different messaging services, creating a universal chat abstraction.
 
 Dependencies:
+* [MIT/GNU Scheme](https://www.gnu.org/software/mit-scheme/)
+* [Software Design for Flexibility attached code](https://groups.csail.mit.edu/mac/users/gjs/6.945/sdf.tgz) (need to adjust paths in `load.scm`)
 * [Racket](https://racket-lang.org/)
 * [websocat](https://github.com/vi/websocat)
