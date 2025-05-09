@@ -62,29 +62,19 @@
     (websocket-send-json discord-socket (make-heartbeat *heartbeat-number*)))
 
 ;; Heartbeat Loop
-(define (discord-keepalive-fetch last-ts) ;; TODO: generalize
-    (if (> (- (get-time-ms) last-ts) *heartbeat-interval*)
-        (cons #t get-time-ms)
-        (cons #f last-ts)))
-;; Returns (interval-passed? last-interval-started-time)
-
-;; TODO: use sleep-current-thread instead to avoid busy waiting
-(define (discord-keepalive-loop discord-socket ts)
-    (when (websocket-connected? discord-socket)
-        (let ((fetched (discord-keepalive-fetch ts)))
-            (let ((ready (car fetched))
-                (next-ts (cdr fetched)))
-                (when ready
-                    (begin
-                        (pp "[discord-keepalive-loop] Sending heartbeat!")
-                        (discord-send-heartbeat! discord-socket)))
-                (discord-keepalive-loop discord-socket next-ts)))))
+(define (discord-keepalive-loop discord-socket)
+  (when (websocket-connected? discord-socket)
+    (sleep-current-thread *heartbeat-interval*)
+    (begin
+      (write-line "[discord-keepalive-loop] Sending heartbeat!")
+      (discord-send-heartbeat! discord-socket))
+    (discord-keepalive-loop discord-socket)))
 
 (define (start-discord-keepalive-loop discord-socket)
     (create-thread
         #f
         (lambda ()
-            (discord-keepalive-loop discord-socket 0))
+            (discord-keepalive-loop discord-socket))
         "Discord Keepalive Loop"))
 
 ;;; Identify ;;;
