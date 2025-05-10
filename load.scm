@@ -77,7 +77,6 @@
 (load-relative "platforms/discord")
 (load-relative "platforms/signal")
 
-;; Apparently it has to be below, otherwise generic procedures will silently be wrong
 (load-relative "bridge")
 
 ;; Load the config file
